@@ -13,14 +13,16 @@ Social Analyzer provides powerful CLI tools for both Node.js and Python implemen
 ### Installation
 
 ```bash
-npm install -g social-analyzer
+git clone https://github.com/qeeqbox/social-analyzer.git
+cd social-analyzer
+npm install
 ```
 
 ### Basic Usage
 
 ```bash
-social-analyzer --username "johndoe" --websites "youtube tiktok"
-social-analyzer --username "johndoe"
+node app.js --username "johndoe" --websites "youtube tiktok"
+node app.js --username "johndoe"
 ```
 
 ### Command Line Arguments
@@ -114,31 +116,31 @@ social-analyzer --username "johndoe"
 <CodeGroup>
 
 ```bash Basic Search
-social-analyzer --username "johndoe"
+node app.js --username "johndoe"
 ```
 
 ```bash Specific Websites
-social-analyzer --username "johndoe" --websites "youtube twitter reddit"
+node app.js --username "johndoe" --websites "youtube twitter reddit"
 ```
 
 ```bash JSON Output
-social-analyzer --username "johndoe" --output json
+node app.js --username "johndoe" --output json
 ```
 
 ```bash Top Websites Only
-social-analyzer --username "johndoe" --top 50
+node app.js --username "johndoe" --top 50
 ```
 
 ```bash With Metadata Extraction
-social-analyzer --username "johndoe" --extract --metadata
+node app.js --username "johndoe" --extract --metadata
 ```
 
 ```bash Filter by Country
-social-analyzer --username "johndoe" --countries "us uk ca"
+node app.js --username "johndoe" --countries "us uk ca"
 ```
 
 ```bash Show Good Results Only
-social-analyzer --username "johndoe" --filter good --profiles detected
+node app.js --username "johndoe" --filter good --profiles detected
 ```
 
 </CodeGroup>
