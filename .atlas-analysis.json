@@ -1,0 +1,123 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Social Analyzer",
+  "projectDescription": "API, CLI, and Web App for analyzing and finding a person's profile across 1000+ social media websites",
+  "theme": "aspen",
+  "primaryColor": "#242b2c",
+  "lightColor": "#040404",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "usage/cli-nodejs",
+              "usage/cli-python",
+              "usage/web-app",
+              "usage/docker"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/detection-modes",
+              "features/string-analysis",
+              "features/metadata-extraction",
+              "features/visualization",
+              "features/filtering"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/options",
+              "configuration/proxy-settings",
+              "configuration/websites-selection"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Command Line",
+            "pages": [
+              "api/cli-reference",
+              "api/output-formats"
+            ]
+          },
+          {
+            "group": "Python API",
+            "pages": [
+              "api/python-class",
+              "api/python-methods"
+            ]
+          },
+          {
+            "group": "Web API",
+            "pages": [
+              "api/web-endpoints"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Additional Info",
+            "pages": [
+              "resources/examples",
+              "resources/troubleshooting",
+              "resources/integration",
+              "resources/faq"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Search profiles across 1000+ social media websites",
+    "Multiple detection modes (fast, slow, special)",
+    "String and name analysis with permutations",
+    "Metadata and pattern extraction",
+    "OCR-based detection using Tesseract",
+    "Profile visualization with force-directed graphs",
+    "CLI, Web App, and Python API interfaces",
+    "Filtering by country, type, and ranking",
+    "Proxy and custom user-agent support",
+    "Docker and grid deployment options"
+  ],
+  "publicApiSurface": [
+    "node app.js --username <name>",
+    "node app.js --username <name> --websites <sites>",
+    "node app.js --username <name> --mode fast|slow|special",
+    "node app.js --username <name> --metadata",
+    "node app.js --username <name> --extract",
+    "node app.js --username <name> --top <N>",
+    "node app.js --username <name> --countries <countries>",
+    "node app.js --username <name> --type <type>",
+    "node app.js --list",
+    "python3 -m social-analyzer --username <name>",
+    "python3 app.py --username <name>",
+    "SocialAnalyzer.run_as_object()",
+    "POST /analyze_string",
+    "GET /get_settings",
+    "POST /save_settings",
+    "POST /get_logs",
+    "POST /cancel"
+  ]
+}
