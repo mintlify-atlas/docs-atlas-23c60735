@@ -1,0 +1,569 @@
+---
+title: 'Python CLI'
+description: 'Use Social Analyzer from the command line with Python or import it as a module'
+---
+
+The Python CLI provides the most comprehensive command-line interface for Social Analyzer, with additional features like screenshots, custom logging, and the ability to import it as a Python module in your own projects.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Python 3">
+    Ensure Python 3.6 or higher is installed on your system.
+  </Step>
+  
+  <Step title="Choose installation method">
+    You can either install as a package from PyPI or clone from GitHub.
+  </Step>
+</Steps>
+
+## Installation
+
+<Tabs>
+  <Tab title="PyPI Package">
+    ```bash
+    pip3 install social-analyzer
+    ```
+    
+    Run as a module:
+    ```bash
+    python3 -m social-analyzer --username "johndoe"
+    ```
+  </Tab>
+  
+  <Tab title="From Source">
+    ```bash
+    git clone https://github.com/qeeqbox/social-analyzer
+    cd social-analyzer
+    pip3 install -r requirements.txt
+    ```
+    
+    Run directly:
+    ```bash
+    python3 app.py --username "johndoe"
+    ```
+  </Tab>
+</Tabs>
+
+## Basic Usage
+
+### Simple Username Search
+
+Search for a single username:
+
+<CodeGroup>
+```bash PyPI Package
+python3 -m social-analyzer --username "johndoe"
+```
+
+```bash From Source
+python3 app.py --username "johndoe"
+```
+</CodeGroup>
+
+### Multiple Usernames
+
+Search for multiple users (comma-separated):
+
+```bash
+python3 -m social-analyzer --username "johndoe,janedoe"
+```
+
+<Note>
+  For the rest of this guide, examples use `python3 app.py` syntax. If you installed via PyPI, replace with `python3 -m social-analyzer`.
+</Note>
+
+## CLI Arguments
+
+### Required Arguments
+
+| Argument | Description | Example |
+|----------|-------------|----------|
+| `--username` | Username(s) to search | `"johndoe"` or `"johndoe,janedoe"` |
+
+### Website Selection
+
+<Tabs>
+  <Tab title="All Websites">
+    ```bash
+    python3 app.py --username "johndoe" --websites all
+    ```
+    Searches all 900+ supported platforms (default).
+  </Tab>
+  
+  <Tab title="Specific Websites">
+    ```bash
+    python3 app.py --username "johndoe" --websites "youtube tiktok tumblr"
+    ```
+    Space-separated list of specific platforms.
+  </Tab>
+  
+  <Tab title="Top Ranked">
+    ```bash
+    python3 app.py --username "johndoe" --top 100
+    ```
+    Search only top N websites by global ranking.
+  </Tab>
+  
+  <Tab title="By Country">
+    ```bash
+    python3 app.py --username "johndoe" --countries "us br ru"
+    ```
+    Filter websites by country code(s).
+  </Tab>
+  
+  <Tab title="By Type">
+    ```bash
+    python3 app.py --username "johndoe" --type "Music"
+    ```
+    Filter by category (Adult, Music, Gaming, etc.).
+  </Tab>
+</Tabs>
+
+### Analysis Mode
+
+| Mode | Description |
+|------|-------------|
+| `fast` | Quick detection using basic techniques (default) |
+| `slow` | Deep analysis with advanced detection |
+| `special` | Special detections for Facebook, Gmail, etc. |
+
+```bash
+python3 app.py --username "johndoe" --mode fast
+```
+
+### Detection Method
+
+<CodeGroup>
+```bash All Methods (default)
+python3 app.py --username "johndoe" --method all
+```
+
+```bash Find Only
+python3 app.py --username "johndoe" --method find
+```
+
+```bash Get All Profiles
+python3 app.py --username "johndoe" --method get
+```
+</CodeGroup>
+
+- `all` - Combines find and get (shows detected + unknown)
+- `find` - Only shows detected profiles
+- `get` - Shows all profiles regardless of detection status
+
+### Output Format
+
+<Tabs>
+  <Tab title="Pretty (default)">
+    ```bash
+    python3 app.py --username "johndoe" --output pretty
+    ```
+    Colored, human-readable terminal output.
+  </Tab>
+  
+  <Tab title="JSON">
+    ```bash
+    python3 app.py --username "johndoe" --output json
+    ```
+    Structured JSON for integration and automation.
+  </Tab>
+</Tabs>
+
+### Filtering Results
+
+#### Filter by Quality
+
+```bash
+# Good matches only (default)
+python3 app.py --username "johndoe" --filter "good"
+
+# Multiple quality levels
+python3 app.py --username "johndoe" --filter "good,maybe"
+
+# All quality levels
+python3 app.py --username "johndoe" --filter "all"
+```
+
+**Filter options:**
+- `good` - High confidence (100% match rate or higher)
+- `maybe` - Medium confidence (50-99% match rate)
+- `bad` - Low confidence (less than 50% match rate)
+- `all` - All matches
+
+#### Filter by Profile Status
+
+```bash
+# Detected profiles only (default)
+python3 app.py --username "johndoe" --profiles "detected"
+
+# Multiple statuses
+python3 app.py --username "johndoe" --profiles "detected,unknown"
+
+# All statuses
+python3 app.py --username "johndoe" --profiles "all"
+```
+
+**Profile status options:**
+- `detected` - Successfully found profiles
+- `unknown` - Profiles with uncertain status
+- `failed` - Failed connection attempts
+
+### Data Extraction
+
+#### Extract Patterns
+
+```bash
+python3 app.py --username "johndoe" --extract
+```
+
+Extracts additional information from detected profiles:
+- URLs and links
+- Email addresses
+- Phone numbers
+- Other patterns
+
+#### Extract Metadata
+
+```bash
+python3 app.py --username "johndoe" --metadata
+```
+
+Extracts HTML meta tags from profile pages:
+- Open Graph tags
+- Twitter Cards
+- Schema.org structured data
+- Profile descriptions
+
+#### Combined Extraction
+
+```bash
+python3 app.py --username "johndoe" --extract --metadata
+```
+
+### Display Options
+
+#### Customize Output Fields
+
+```bash
+python3 app.py --username "johndoe" --options "link,rate,title"
+```
+
+Available fields:
+- `link` - Profile URL
+- `rate` - Detection confidence percentage
+- `title` - Page title
+- `text` - Extracted text content
+
+#### Trim Long Strings
+
+```bash
+python3 app.py --username "johndoe" --trim
+```
+
+Limits text content to 50 characters for cleaner output.
+
+## Python-Specific Features
+
+### Logging and Screenshots
+
+<Steps>
+  <Step title="Enable logging">
+    ```bash
+    python3 app.py --username "johndoe" --logs
+    ```
+    Creates a temporary directory with detailed logs.
+  </Step>
+  
+  <Step title="Custom log directory">
+    ```bash
+    python3 app.py --username "johndoe" --logs --logs_dir "/path/to/logs"
+    ```
+    Specify a custom location for log files.
+  </Step>
+  
+  <Step title="Enable screenshots">
+    ```bash
+    python3 app.py --username "johndoe" --logs --screenshots
+    ```
+    Captures screenshots of detected profiles (requires Chrome).
+  </Step>
+</Steps>
+
+<Note>
+  Screenshots require the latest version of Chrome to be installed and only work when `--logs` is also enabled.
+</Note>
+
+### Simplify Output
+
+```bash
+python3 app.py --username "johndoe" --simplify
+```
+
+Outputs only profile links with 100% match rate - perfect for quick checks:
+
+```
+[Detected] 3 Profile[s]
+https://twitter.com/johndoe
+https://github.com/johndoe
+https://reddit.com/user/johndoe
+```
+
+### Silent Mode
+
+```bash
+python3 app.py --username "johndoe" --silent
+```
+
+Disables all terminal output (useful when using JSON output in scripts).
+
+### Timeout Configuration
+
+```bash
+python3 app.py --username "johndoe" --timeout 5
+```
+
+Sets a custom delay (in seconds) between requests to avoid rate limiting.
+
+### Custom Headers
+
+```bash
+python3 app.py --username "johndoe" --headers '{"User-Agent": "Custom Agent"}'
+```
+
+Provides custom HTTP headers as a JSON dictionary.
+
+## Complete Examples
+
+<CodeGroup>
+```bash Basic Search
+python3 app.py --username "johndoe"
+```
+
+```bash Targeted Platforms
+python3 app.py --username "johndoe" --websites "github reddit stackoverflow"
+```
+
+```bash Top 50 with Metadata
+python3 app.py --username "johndoe" --top 50 --metadata
+```
+
+```bash Multi-User Analysis
+python3 app.py --username "johndoe,janedoe" --extract --metadata
+```
+
+```bash With Screenshots
+python3 app.py --username "johndoe" --logs --screenshots --filter "good"
+```
+
+```bash JSON for Automation
+python3 app.py --username "johndoe" --output json --filter "good" --silent > results.json
+```
+
+```bash Music Platforms Only
+python3 app.py --username "djjohndoe" --type "Music" --extract
+```
+
+```bash Simplified Quick Check
+python3 app.py --username "johndoe" --simplify
+```
+</CodeGroup>
+
+## Using as a Python Module
+
+You can import Social Analyzer as a module in your own Python projects:
+
+### Basic Import
+
+```python
+from importlib import import_module
+
+# Initialize
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+# Simple search
+results = SocialAnalyzer.run_as_object(
+    username="johndoe",
+    silent=True
+)
+
+print(results)
+```
+
+### Advanced Usage
+
+```python
+from importlib import import_module
+
+# Initialize
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+# Detailed search with options
+results = SocialAnalyzer.run_as_object(
+    username="johndoe,janedoe",
+    silent=True,
+    output="json",
+    filter="good",
+    metadata=True,
+    extract=True,
+    timeout=10,
+    profiles="detected",
+    websites="twitter github reddit"
+)
+
+print(results)
+```
+
+### Available Parameters
+
+```python
+SocialAnalyzer.run_as_object(
+    username="",          # Required: username(s) to search
+    websites="all",      # Websites to search
+    mode="fast",         # Analysis mode
+    output="pretty",     # Output format
+    options="",          # Fields to display
+    method="all",        # Detection method
+    filter="good",       # Quality filter
+    profiles="detected", # Profile status filter
+    countries="all",     # Country filter
+    type="all",          # Category filter
+    top="0",             # Top N websites
+    extract=False,       # Extract patterns
+    metadata=False,      # Extract metadata
+    trim=False,          # Trim long strings
+    logs=False,          # Enable logging
+    logs_dir="",         # Custom log directory
+    timeout=0,           # Request timeout
+    silent=False,        # Disable output
+    screenshots=False,   # Capture screenshots
+    simplify=False,      # Simplified output
+    headers={}           # Custom HTTP headers
+)
+```
+
+### Processing Results
+
+```python
+from importlib import import_module
+import json
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+results = SocialAnalyzer.run_as_object(
+    username="johndoe",
+    silent=True,
+    filter="good",
+    profiles="detected"
+)
+
+# Process detected profiles
+if "detected" in results:
+    for profile in results["detected"]:
+        print(f"Found: {profile['link']}")
+        print(f"Confidence: {profile['rate']}")
+        print(f"Title: {profile['title']}")
+        print("---")
+```
+
+## Listing Available Websites
+
+```bash
+python3 app.py --list
+```
+
+Displays all 900+ supported social media platforms and websites.
+
+## Output Examples
+
+### Pretty Output
+
+```
+[init] Detections are updated very often, make sure to get the most up-to-date ones
+[init] languages.json & sites.json loaded successfully
+[Init] Selected websites: 842
+[Info] username: johndoe
+[Checking] twitter.com
+[Checking] github.com
+-----------------------
+link         : https://twitter.com/johndoe
+rate         : %100.00
+status       : good
+title        : John Doe (@johndoe) / Twitter
+language     : English
+type         : Social Network
+country      : us
+rank         : 5
+-----------------------
+[Detected] 15 Profile[s]
+```
+
+### JSON Output
+
+```json
+{
+  "detected": [
+    {
+      "link": "https://twitter.com/johndoe",
+      "rate": "%100.00",
+      "status": "good",
+      "title": "John Doe (@johndoe) / Twitter",
+      "language": "English",
+      "type": "Social Network",
+      "country": "us",
+      "rank": "5",
+      "text": "Software engineer and open source contributor...",
+      "metadata": [
+        {
+          "property": "og:title",
+          "content": "John Doe (@johndoe) / Twitter"
+        },
+        {
+          "property": "og:description",
+          "content": "Software engineer and open source contributor"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Performance and Configuration
+
+**Worker Threads**: The Python version uses 15 worker threads by default for parallel checking.
+
+**Request Delays**: Random delays (10-99ms) between requests help avoid rate limiting.
+
+**Retry Logic**: Failed requests are automatically retried up to 3 times.
+
+## Troubleshooting
+
+**Module not found error**
+
+Ensure social-analyzer is installed:
+```bash
+pip3 install --upgrade social-analyzer
+```
+
+**Screenshot errors**
+
+Install Chrome/Chromium and ensure `--logs` is enabled:
+```bash
+sudo apt-get install chromium-browser
+python3 app.py --username "johndoe" --logs --screenshots
+```
+
+**Permission errors with log directory**
+
+Specify a writable directory:
+```bash
+python3 app.py --username "johndoe" --logs --logs_dir "./logs"
+```
+
+**Import errors when using as module**
+
+Use the importlib approach:
+```python
+from importlib import import_module
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+```

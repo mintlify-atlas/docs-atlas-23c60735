@@ -1,0 +1,488 @@
+---
+title: 'Output Formats'
+description: 'Understanding Social Analyzer output formats and result structures'
+icon: 'file-export'
+---
+
+## Overview
+
+Social Analyzer supports two primary output formats: **Pretty** (human-readable) and **JSON** (machine-readable). The format is controlled by the `--output` or `output` parameter.
+
+---
+
+## Output Format Selection
+
+### CLI
+
+```bash
+# Pretty output (default)
+social-analyzer --username "johndoe"
+social-analyzer --username "johndoe" --output pretty
+
+# JSON output
+social-analyzer --username "johndoe" --output json
+```
+
+### Python API
+
+```python
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer()
+
+# Pretty output
+result = sa.run_as_object(username="johndoe", output="pretty")
+
+# JSON output
+result = sa.run_as_object(username="johndoe", output="json")
+```
+
+---
+
+## Pretty Output Format
+
+The pretty format provides human-readable, color-coded console output with profile counts and formatted results.
+
+### Example Output
+
+```
+[init] Detections are updated very often, make sure to get the most up-to-date ones
+[init] languages.json & sites.json loaded successfully
+[Init] Selected websites: 900
+[Checking] youtube
+[Checking] twitter
+[Checking] reddit
+...
+[Detected] 15 Profile[s]
+[unknown] 3 Profile[s]
+[failed] 2 Profile[s]
+
+[Custom output with colored formatting]
+```
+
+### Features
+
+- Color-coded status messages
+- Progress indicators
+- Profile counts by category
+- Formatted profile details
+- Real-time status updates
+
+---
+
+## JSON Output Format
+
+The JSON format provides structured data suitable for programmatic processing, integration, and storage.
+
+### Structure Overview
+
+<ResponseField name="detected" type="array">
+  Array of successfully detected profiles with high confidence
+</ResponseField>
+
+<ResponseField name="unknown" type="array">
+  Array of profiles that exist but couldn't be confidently verified
+</ResponseField>
+
+<ResponseField name="failed" type="array">
+  Array of profiles that failed to load or returned errors
+</ResponseField>
+
+### Complete JSON Structure
+
+```json
+{
+  "detected": [
+    {
+      "link": "https://www.youtube.com/johndoe",
+      "rate": "100%",
+      "title": "John Doe - YouTube",
+      "status": "good",
+      "text": "Profile text content...",
+      "language": "English",
+      "type": "Video",
+      "global_rank": 2,
+      "rate_percent": 100,
+      "extracted": {
+        "profiles": ["@johndoe", "johndoe123"],
+        "urls": ["https://example.com"],
+        "patterns": ["pattern1", "pattern2"]
+      },
+      "metadata": {
+        "names": ["John Doe"],
+        "images": ["https://example.com/photo.jpg"],
+        "emails": ["john@example.com"]
+      }
+    }
+  ],
+  "unknown": [
+    {
+      "link": "https://www.example.com/johndoe"
+    }
+  ],
+  "failed": [
+    {
+      "link": "https://www.brokensite.com/johndoe"
+    }
+  ]
+}
+```
+
+---
+
+## Profile Object Fields
+
+### Detected Profile Fields
+
+Detected profiles contain the most comprehensive information:
+
+<ResponseField name="link" type="string" required>
+  Full URL to the detected profile
+  
+  ```
+  "https://www.youtube.com/johndoe"
+  ```
+</ResponseField>
+
+<ResponseField name="rate" type="string" required>
+  Confidence rate as percentage string
+  
+  ```
+  "100%", "85.5%", "50%"
+  ```
+</ResponseField>
+
+<ResponseField name="rate_percent" type="number">
+  Numeric confidence percentage (0-100)
+  
+  ```
+  100, 85.5, 50
+  ```
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Detection quality indicator
+  
+  - `good` - High confidence match (greater than 80%)
+  - `maybe` - Medium confidence (40-80%)
+  - `bad` - Low confidence (less than 40%)
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  Page title from the profile
+  
+  ```
+  "John Doe (@johndoe) - YouTube"
+  ```
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  Extracted text content from the profile page
+  
+  ```
+  "Welcome to my channel! Subscribe for daily content..."
+  ```
+</ResponseField>
+
+<ResponseField name="language" type="string">
+  Detected page language
+  
+  ```
+  "English", "Spanish (Maybe)", "unavailable"
+  ```
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Website category
+  
+  ```
+  "Social", "Video", "Music", "Gaming", "Adult"
+  ```
+</ResponseField>
+
+<ResponseField name="global_rank" type="number">
+  Alexa/popularity ranking (0 if unranked)
+  
+  ```
+  2, 150, 5000, 0
+  ```
+</ResponseField>
+
+<ResponseField name="extracted" type="object">
+  Extracted data when `--extract` flag is used
+  
+  <Expandable title="extracted fields">
+    <ResponseField name="profiles" type="array">
+      Extracted usernames and profile handles
+    </ResponseField>
+    
+    <ResponseField name="urls" type="array">
+      Extracted URLs from the profile
+    </ResponseField>
+    
+    <ResponseField name="patterns" type="array">
+      Detected patterns and identifiers
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  OSINT metadata when `--metadata` flag is used
+  
+  <Expandable title="metadata fields">
+    <ResponseField name="names" type="array">
+      Extracted names
+    </ResponseField>
+    
+    <ResponseField name="emails" type="array">
+      Found email addresses
+    </ResponseField>
+    
+    <ResponseField name="images" type="array">
+      Profile images and photos
+    </ResponseField>
+    
+    <ResponseField name="phones" type="array">
+      Found phone numbers
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Unknown Profile Fields
+
+Unknown profiles contain minimal information:
+
+<ResponseField name="link" type="string" required>
+  Full URL to the profile (existence unverified)
+</ResponseField>
+
+### Failed Profile Fields
+
+Failed profiles only contain the attempted URL:
+
+<ResponseField name="link" type="string" required>
+  Full URL that failed to load or returned errors
+</ResponseField>
+
+---
+
+## Filtering Output
+
+### By Status
+
+Control which profile categories are included:
+
+```bash
+# Only detected profiles
+social-analyzer --username "johndoe" --profiles detected
+
+# Detected and failed
+social-analyzer --username "johndoe" --profiles detected,failed
+
+# All categories
+social-analyzer --username "johndoe" --profiles all
+```
+
+### By Confidence
+
+Filter detected profiles by confidence level:
+
+```bash
+# Only high confidence
+social-analyzer --username "johndoe" --filter good
+
+# Good and maybe
+social-analyzer --username "johndoe" --filter good,maybe
+
+# All confidence levels
+social-analyzer --username "johndoe" --filter all
+```
+
+### By Fields
+
+Show only specific fields:
+
+```bash
+# Only links and rates
+social-analyzer --username "johndoe" --options "link,rate"
+
+# Links, rates, and titles
+social-analyzer --username "johndoe" --options "link,rate,title"
+
+# Everything (default)
+social-analyzer --username "johndoe" --options ""
+```
+
+---
+
+## Simplified Output
+
+The Python CLI supports a simplified mode that outputs only links of 100% confidence profiles:
+
+```bash
+python -m social-analyzer --username "johndoe" --simplify
+```
+
+### Simplified Structure
+
+```json
+{
+  "detected": [
+    {
+      "link": "https://www.youtube.com/johndoe"
+    },
+    {
+      "link": "https://twitter.com/johndoe"
+    }
+  ]
+}
+```
+
+<Tip>
+  Simplified mode automatically:
+  - Sets filter to "good"
+  - Removes "unknown" and "failed" categories
+  - Keeps only 100% confidence matches
+  - Shows only the "link" field
+</Tip>
+
+---
+
+## Web API Response Format
+
+The web API (`POST /analyze_string`) returns a comprehensive object:
+
+```json
+{
+  "username": "johndoe",
+  "uuid": "task-uuid-here",
+  "info": {
+    "items": [],
+    "original": "johndoe",
+    "corrected": "johndoe",
+    "total": 15,
+    "checking": "Using johndoe with no lookups"
+  },
+  "user_info_normal": {
+    "data": [
+      {
+        "link": "https://www.youtube.com/johndoe",
+        "rate": "100%",
+        "status": "good",
+        "title": "John Doe - YouTube"
+      }
+    ],
+    "type": "all"
+  },
+  "user_info_advanced": {
+    "data": [],
+    "type": "all"
+  },
+  "user_info_special": {
+    "data": [],
+    "type": "all"
+  },
+  "ages": [],
+  "names_origins": [],
+  "table": {
+    "prefix": [],
+    "name": [],
+    "number": [],
+    "symbol": [],
+    "unknown": [],
+    "maybe": []
+  },
+  "common": [],
+  "words_info": [],
+  "custom_search": [],
+  "graph": {
+    "graph": {
+      "nodes": [],
+      "links": []
+    }
+  },
+  "stats": {
+    "categories": {},
+    "countries": {}
+  },
+  "logs": "[log content here]"
+}
+```
+
+---
+
+## Sorting and Organization
+
+Detected profiles are automatically sorted by confidence rate in descending order:
+
+```json
+{
+  "detected": [
+    {"link": "...", "rate": "100%"},
+    {"link": "...", "rate": "95.5%"},
+    {"link": "...", "rate": "85%"},
+    {"link": "...", "rate": "70%"}
+  ]
+}
+```
+
+---
+
+## Integration Examples
+
+### Parse JSON in Bash
+
+```bash
+social-analyzer --username "johndoe" --output json | jq '.detected[].link'
+```
+
+### Parse JSON in Python
+
+```python
+import json
+import subprocess
+
+result = subprocess.run(
+    ['social-analyzer', '--username', 'johndoe', '--output', 'json', '--silent'],
+    capture_output=True,
+    text=True
+)
+
+data = json.loads(result.stdout)
+for profile in data.get('detected', []):
+    print(f"{profile['link']} - {profile['rate']}")
+```
+
+### Parse JSON in Node.js
+
+```javascript
+const { execSync } = require('child_process');
+
+const output = execSync(
+  'social-analyzer --username johndoe --output json'
+).toString();
+
+const data = JSON.parse(output);
+data.detected.forEach(profile => {
+  console.log(`${profile.link} - ${profile.rate}`);
+});
+```
+
+---
+
+## Best Practices
+
+<Tip>
+  For automation, combine `--output json` with `--silent` to get clean JSON without log messages:
+  ```bash
+  social-analyzer --username "johndoe" --output json --silent > results.json
+  ```
+</Tip>
+
+<Note>
+  The exact fields returned depend on the flags used (`--extract`, `--metadata`, `--options`, etc.)
+</Note>
+
+<Warning>
+  When using `--trim`, long strings will be truncated. Avoid this flag if you need full content.
+</Warning>

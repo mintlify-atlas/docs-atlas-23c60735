@@ -1,0 +1,385 @@
+---
+title: 'Website Selection'
+description: 'Filter and select specific websites by country, type, popularity, or custom criteria'
+---
+
+## Overview
+
+Social Analyzer supports searching across 900+ social media websites. Instead of searching all websites, you can filter by specific criteria to focus your analysis and reduce scanning time.
+
+## Basic Website Selection
+
+### Specific Websites
+
+<ParamField path="websites" type="string" default="all">
+  Search specific websites by name, separated by spaces.
+  
+  ```bash
+  # Search only YouTube and TikTok
+  node app.js --username "johndoe" --websites "youtube tiktok"
+  
+  # Search multiple platforms
+  python app.py --username "johndoe" --websites "instagram twitter facebook reddit"
+  ```
+  
+  <Info>
+    Use `--list` to see all available website names
+  </Info>
+</ParamField>
+
+### All Websites (Default)
+
+```bash
+# Explicit all websites
+node app.js --username "johndoe" --websites all
+
+# Implicit (default behavior)
+node app.js --username "johndoe"
+```
+
+## Top Websites Selection
+
+<ParamField path="top" type="string" default="0">
+  Select the top N most popular websites automatically.
+  
+  **Note:** When using `--top`, the `--websites` parameter is not needed.
+  
+  ```bash
+  # Search top 10 websites
+  node app.js --username "johndoe" --top 10
+  
+  # Search top 50 websites
+  python app.py --username "johndoe" --top 50
+  
+  # Common values: 10, 25, 50, 100
+  node app.js --username "johndoe" --top 25
+  ```
+</ParamField>
+
+### Popular Top Values
+
+- **Top 10**: Major platforms (YouTube, Facebook, Instagram, Twitter, etc.)
+- **Top 25**: Includes regional platforms and popular forums
+- **Top 50**: Comprehensive coverage of mainstream social media
+- **Top 100**: Extended coverage including niche platforms
+
+## Filter by Country
+
+<ParamField path="countries" type="string" default="all">
+  Select websites by country or countries, separated by spaces.
+  
+  **Format:** Two-letter country codes (ISO 3166-1 alpha-2)
+  
+  ```bash
+  # Search US websites only
+  node app.js --username "johndoe" --countries us
+  
+  # Search multiple countries
+  python app.py --username "johndoe" --countries "us br ru"
+  
+  # All countries (default)
+  node app.js --username "johndoe" --countries all
+  ```
+</ParamField>
+
+### Common Country Codes
+
+| Code | Country | Popular Platforms |
+|------|---------|------------------|
+| `us` | United States | Twitter, Reddit, LinkedIn |
+| `br` | Brazil | Orkut alternatives, Brazilian forums |
+| `ru` | Russia | VKontakte, Odnoklassniki |
+| `cn` | China | Weibo, Douban, Baidu Tieba |
+| `jp` | Japan | Mixi, Pixiv, Nico Nico |
+| `in` | India | ShareChat, Indian forums |
+| `de` | Germany | German social networks |
+| `fr` | France | Skyrock, French communities |
+| `uk` | United Kingdom | UK-specific platforms |
+| `kr` | South Korea | Cyworld, Korean platforms |
+
+### Multi-Country Example
+
+```bash
+# Search US, UK, and Canadian platforms
+python app.py --username "johndoe" --countries "us uk ca"
+
+# Asian markets
+node app.js --username "johndoe" --countries "cn jp kr in"
+
+# European markets
+node app.js --username "johndoe" --countries "de fr es it"
+```
+
+## Filter by Website Type
+
+<ParamField path="type" type="string" default="all">
+  Select websites by category or type.
+  
+  **Available Types:**
+  - `adult` - Adult content platforms
+  - `music` - Music streaming and sharing platforms
+  - `gaming` - Gaming communities and platforms
+  - `dating` - Dating and relationship platforms
+  - `business` - Professional and business networks
+  - `forum` - Discussion forums and communities
+  - `video` - Video sharing platforms
+  - `photo` - Photo sharing platforms
+  - `blog` - Blogging platforms
+  - `all` - All types (default)
+  
+  ```bash
+  # Search only music platforms
+  node app.js --username "johndoe" --type music
+  
+  # Search business networks
+  python app.py --username "johndoe" --type business
+  
+  # Search gaming platforms
+  node app.js --username "johndoe" --type gaming
+  ```
+</ParamField>
+
+### Type Categories Examples
+
+**Music Platforms:**
+```bash
+node app.js --username "djjohn" --type music
+# Searches: Spotify, SoundCloud, Bandcamp, Last.fm, etc.
+```
+
+**Business Networks:**
+```bash
+python app.py --username "johndoe" --type business
+# Searches: LinkedIn, AngelList, Crunchbase, etc.
+```
+
+**Video Platforms:**
+```bash
+node app.js --username "creator123" --type video
+# Searches: YouTube, Vimeo, Dailymotion, TikTok, etc.
+```
+
+**Gaming Platforms:**
+```bash
+python app.py --username "gamer99" --type gaming
+# Searches: Steam, Xbox Live, PSN, Twitch, Discord, etc.
+```
+
+## Combining Filters
+
+### Top + Country
+
+```bash
+# Top 25 US websites
+node app.js --username "johndoe" --top 25 --countries us
+
+# Top 50 European websites
+python app.py --username "johndoe" --top 50 --countries "de fr es it"
+```
+
+### Type + Country
+
+```bash
+# Music platforms in US and UK
+node app.js --username "musician" --type music --countries "us uk"
+
+# Gaming platforms in Asia
+python app.py --username "gamer" --type gaming --countries "jp kr cn"
+```
+
+### Top + Type
+
+```bash
+# Top 10 business networks
+node app.js --username "johndoe" --top 10 --type business
+
+# Top 25 video platforms
+python app.py --username "creator" --top 25 --type video
+```
+
+### All Filters Combined
+
+```bash
+# Top 20 music platforms in US and UK
+node app.js --username "djjohn" \
+  --top 20 \
+  --type music \
+  --countries "us uk"
+
+# Top 15 business networks in Europe
+python app.py --username "johndoe" \
+  --top 15 \
+  --type business \
+  --countries "de fr es it"
+```
+
+## Listing Available Websites
+
+<ParamField path="list" type="boolean" default="false">
+  Display all available websites and exit without performing a search.
+  
+  ```bash
+  # List all websites
+  node app.js --list
+  python app.py --list
+  ```
+  
+  The output includes:
+  - Website name
+  - Country
+  - Type/category
+  - Detection methods
+</ParamField>
+
+## Performance Considerations
+
+### Scan Time Estimates
+
+| Selection | Websites | Fast Mode | Slow Mode |
+|-----------|----------|-----------|------------|
+| Specific (3-5) | ~5 | ~5-10 sec | ~30-60 sec |
+| Top 10 | 10 | ~10-20 sec | ~2-5 min |
+| Top 25 | 25 | ~25-45 sec | ~5-10 min |
+| Top 50 | 50 | ~1-2 min | ~10-20 min |
+| Top 100 | 100 | ~2-4 min | ~20-40 min |
+| All | 900+ | ~15-30 min | ~2-4 hours |
+
+<Warning>
+  Searching all 900+ websites can be very time-consuming. Use filters to focus your search.
+</Warning>
+
+### Optimization Tips
+
+1. **Start with top websites**:
+   ```bash
+   node app.js --username "johndoe" --top 25
+   ```
+
+2. **Filter by relevant countries**:
+   ```bash
+   python app.py --username "johndoe" --countries "us uk ca"
+   ```
+
+3. **Use specific websites for known platforms**:
+   ```bash
+   node app.js --username "johndoe" --websites "twitter instagram linkedin"
+   ```
+
+4. **Combine with fast mode and filtering**:
+   ```bash
+   python app.py --username "johndoe" \
+     --top 50 \
+     --mode fast \
+     --filter good \
+     --profiles detected
+   ```
+
+## Complete Examples
+
+### Targeted Professional Search
+
+```bash
+# Search business networks in major markets
+python app.py --username "johndoe" \
+  --type business \
+  --countries "us uk de" \
+  --mode fast \
+  --filter good \
+  --output json
+```
+
+### Content Creator Analysis
+
+```bash
+# Search video and music platforms
+node app.js --username "creator123" \
+  --websites "youtube tiktok instagram soundcloud spotify" \
+  --mode slow \
+  --extract \
+  --metadata
+```
+
+### Regional Investigation
+
+```bash
+# Search top 50 Asian platforms
+python app.py --username "target_user" \
+  --top 50 \
+  --countries "cn jp kr in" \
+  --mode fast \
+  --timeout 2
+```
+
+### Quick Popular Platforms Check
+
+```bash
+# Check top 10 most popular platforms
+node app.js --username "johndoe" \
+  --top 10 \
+  --mode fast \
+  --filter good \
+  --options "link,rate"
+```
+
+## FAQ
+
+<Accordion title="How do I know which websites to search?">
+  Start with `--list` to see all available websites:
+  
+  ```bash
+  node app.js --list | grep -i "music"
+  ```
+  
+  Then use:
+  - `--top 25` for general searches
+  - `--type` for category-specific searches
+  - `--countries` for regional searches
+  - Specific `--websites` when you know the target's platforms
+</Accordion>
+
+<Accordion title="Can I exclude certain websites?">
+  Social Analyzer doesn't have a built-in exclude feature. Instead:
+  - Use positive filters (`--websites`, `--top`, `--type`, `--countries`)
+  - Filter results after scanning with `--output json` and post-processing
+</Accordion>
+
+<Accordion title="What does 'top' mean in --top parameter?">
+  The `--top` parameter selects websites ranked by:
+  - Global popularity
+  - Traffic volume
+  - User base size
+  - Detection reliability
+  
+  Top 10 includes major platforms like Facebook, Instagram, Twitter, YouTube, etc.
+</Accordion>
+
+<Accordion title="How often is the website database updated?">
+  The websites database (`data/sites.json`) is updated regularly by the Social Analyzer team. Check the repository for the latest updates:
+  
+  ```bash
+  cd social-analyzer
+  git pull origin master
+  ```
+</Accordion>
+
+<Accordion title="Can I add custom websites?">
+  Yes! You can add custom websites by editing `data/sites.json`. The file contains detection rules for each website including URL patterns, detection methods, and metadata extraction rules.
+</Accordion>
+
+<Accordion title="What if a website is blocked in my country?">
+  Use a proxy server to bypass geo-restrictions:
+  
+  ```bash
+  export HTTPS_PROXY="http://proxy-server:8080"
+  python app.py --username "johndoe" --countries "cn"
+  ```
+  
+  See [Proxy Settings](/configuration/proxy-settings) for more details.
+</Accordion>
+
+## See Also
+
+- [CLI Options](/configuration/options) - All available command-line options
+- [Proxy Settings](/configuration/proxy-settings) - Configure proxy and network settings
+- [Quickstart](/quickstart) - Get started with Social Analyzer
+- [Integration Guide](/resources/integration) - Integrate Social Analyzer with other tools

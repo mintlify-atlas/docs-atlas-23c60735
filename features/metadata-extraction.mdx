@@ -1,0 +1,458 @@
+---
+title: Metadata Extraction
+description: Extracting metadata and patterns from social media profiles
+---
+
+Social Analyzer can extract structured metadata and patterns from detected profiles to gather intelligence about the profile owner. This information is crucial for OSINT investigations and profile correlation.
+
+## Overview
+
+The extraction module (`extraction.js`) provides two main capabilities:
+
+1. **Metadata Extraction**: Extracts meta tags from profile HTML
+2. **Pattern Extraction**: Finds specific patterns like emails, phones, and links
+
+Both features are optional and activated with command-line flags.
+
+## Metadata Extraction
+
+Metadata extraction parses HTML meta tags to collect information about profiles, including social graph data, descriptions, images, and other structured information.
+
+### How It Works
+
+From `extraction.js:6-58`, the metadata extractor:
+
+```javascript
+async function extract_metadata (site, source) {
+  const $ = cheerio.load(source)
+  const meta = $('meta')
+  const temp_metadata_list = []
+  const temp_metadata_for_checking = []
+  
+  Object.keys(meta).forEach(function (key) {
+    if (meta[key].attribs) {
+      if (!strings_meta.test(JSON.stringify(meta[key].attribs))) {
+        const temp_dict = {}
+        
+        if (meta[key].attribs.property) {
+          temp_dict.property = meta[key].attribs.property
+        }
+        if (meta[key].attribs.name) {
+          temp_dict.name = meta[key].attribs.name
+        }
+        if (meta[key].attribs.itemprop) {
+          temp_dict.itemprop = meta[key].attribs.itemprop
+        }
+        if (meta[key].attribs.content) {
+          temp_dict.content = meta[key].attribs.content
+        }
+        
+        temp_metadata_list.push(temp_dict)
+      }
+    }
+  })
+  
+  return temp_metadata_list
+}
+```
+
+### Filtered Meta Tags
+
+The extractor filters out technical meta tags using regex patterns:
+
+```javascript
+const strings_meta = new RegExp(
+  'regionsAllowed|width|height|color|rgba\\(|charset|viewport|refresh|equiv', 
+  'i'
+)
+```
+
+This ensures only meaningful metadata is extracted.
+
+### Supported Meta Tag Types
+
+The extractor handles three types of meta tags:
+
+1. **Property-based** (Open Graph, Facebook)
+   ```html
+   <meta property="og:title" content="John Doe">
+   <meta property="og:image" content="https://...">
+   ```
+
+2. **Name-based** (Twitter, standard meta)
+   ```html
+   <meta name="description" content="Developer and designer">
+   <meta name="twitter:card" content="summary">
+   ```
+
+3. **Itemprop-based** (Schema.org)
+   ```html
+   <meta itemprop="name" content="John Doe">
+   <meta itemprop="description" content="...">
+   ```
+
+### Duplicate Handling
+
+From `extraction.js:34-45`, the extractor combines duplicate metadata:
+
+```javascript
+['property', 'name', 'itemprop'].forEach((item, i) => {
+  if (temp_dict[item]) {
+    temp_metadata_list.forEach((_item, i) => {
+      if (_item[item]) {
+        if (_item[item] === temp_dict[item]) {
+          // Combine duplicate entries
+          temp_metadata_list[i].content += ', ' + temp_dict.content
+          add = false
+        }
+      }
+    })
+  }
+})
+```
+
+This prevents redundant metadata entries while preserving multiple values.
+
+### Usage
+
+```bash
+# Enable metadata extraction
+node app.js --username "johndoe" --metadata
+
+# Metadata with specific websites
+node app.js --username "johndoe" --metadata --websites "twitter facebook"
+
+# Metadata with top-ranked sites
+node app.js --username "johndoe" --metadata --top 100
+```
+
+### Example Output
+
+```json
+{
+  "username": "johndoe",
+  "link": "https://twitter.com/johndoe",
+  "status": "good",
+  "metadata": [
+    {
+      "property": "og:title",
+      "content": "John Doe (@johndoe)"
+    },
+    {
+      "property": "og:description",
+      "content": "Software Developer | Open Source Enthusiast"
+    },
+    {
+      "property": "og:image",
+      "content": "https://pbs.twimg.com/profile_images/..."
+    },
+    {
+      "name": "twitter:card",
+      "content": "summary"
+    },
+    {
+      "name": "description",
+      "content": "John Doe's profile on Twitter"
+    }
+  ]
+}
+```
+
+<Note>
+Metadata extraction only occurs for profiles with "good" status to reduce processing time and focus on confirmed matches.
+</Note>
+
+## Pattern Extraction
+
+Pattern extraction uses regular expressions to find specific information patterns within profile HTML source code.
+
+### How It Works
+
+From `extraction.js:60-87`, the pattern extractor:
+
+```javascript
+async function extract_patterns (site, source) {
+  const temp_patterns_list = []
+  const temp_patterns_for_checking = []
+  
+  if ('extract' in site) {
+    site.extract.forEach((item, i) => {
+      const regex_pattern = new RegExp(item.regex, 'g')
+      let found = null
+      
+      while (found = regex_pattern.exec(source)) {
+        if (!temp_patterns_for_checking.includes(found[1])) {
+          temp_patterns_for_checking.push(found[1])
+          
+          if (item.type === 'link') {
+            found[1] = decodeURIComponent(found[1])
+          }
+          
+          temp_patterns_list.push({
+            type: item.type,
+            matched: found[1]
+          })
+        }
+      }
+    })
+  }
+  
+  return temp_patterns_list
+}
+```
+
+### Pattern Types
+
+Each website in the detection database can define custom extraction patterns:
+
+- **Email addresses**
+- **Phone numbers**
+- **Social media links**
+- **Website URLs**
+- **User IDs**
+- **Custom patterns**
+
+### Configuration Format
+
+Patterns are configured per website in `sites.json`:
+
+```json
+{
+  "url": "https://example.com/{username}",
+  "extract": [
+    {
+      "type": "email",
+      "regex": "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
+    },
+    {
+      "type": "phone",
+      "regex": "\\+?[0-9]{1,3}[-.\\s]?[0-9]{3}[-.\\s]?[0-9]{4}"
+    },
+    {
+      "type": "link",
+      "regex": "href=\"(https?://[^\"]+)\""
+    }
+  ]
+}
+```
+
+### URL Decoding
+
+Links are automatically URL-decoded to make them human-readable:
+
+```javascript
+if (item.type === 'link') {
+  found[1] = decodeURIComponent(found[1])
+}
+```
+
+### Usage
+
+```bash
+# Enable pattern extraction
+node app.js --username "johndoe" --extract
+
+# Extract both metadata and patterns
+node app.js --username "johndoe" --metadata --extract
+
+# With specific sites
+node app.js --username "johndoe" --extract --websites "linkedin github"
+```
+
+### Example Output
+
+```json
+{
+  "username": "johndoe",
+  "link": "https://github.com/johndoe",
+  "status": "good",
+  "extracted": [
+    {
+      "type": "email",
+      "matched": "john.doe@example.com"
+    },
+    {
+      "type": "link",
+      "matched": "https://johndoe.com"
+    },
+    {
+      "type": "link",
+      "matched": "https://twitter.com/johndoe"
+    }
+  ]
+}
+```
+
+<Tip>
+Pattern extraction is particularly useful for finding cross-platform connections and building a comprehensive profile of the target.
+</Tip>
+
+## Integration with Detection Modes
+
+Extraction features work with both fast and slow detection modes.
+
+### Fast Mode Integration
+
+From `fast-scan.js:162-177`:
+
+```javascript
+if (temp_profile.status === 'good') {
+  if (options.includes('ExtractPatterns')) {
+    let temp_extracted_list = []
+    temp_extracted_list = await extraction.extract_patterns(site, source)
+    if (temp_extracted_list.length > 0) {
+      temp_profile.extracted = temp_extracted_list
+    }
+  }
+  
+  if (options.includes('ExtractMetadata')) {
+    let temp_metadata_list = []
+    temp_metadata_list = await extraction.extract_metadata(site, source)
+    if (temp_metadata_list.length > 0) {
+      temp_profile.metadata = temp_metadata_list
+    }
+  }
+}
+```
+
+### Slow Mode Integration
+
+From `slow-scan.js:136-151`, slow mode uses the same extraction logic:
+
+```javascript
+if (temp_profile.status === 'good') {
+  if (options.includes('ExtractPatterns')) {
+    let temp_extracted_list = []
+    temp_extracted_list = await extraction.extract_patterns(site, source)
+    if (temp_extracted_list.length > 0) {
+      temp_profile.extracted = temp_extracted_list
+    }
+  }
+  
+  if (options.includes('ExtractMetadata')) {
+    let temp_metadata_list = []
+    temp_metadata_list = await extraction.extract_metadata(site, source)
+    if (temp_metadata_list.length > 0) {
+      temp_profile.metadata = temp_metadata_list
+    }
+  }
+}
+```
+
+<Note>
+Extraction only occurs after a profile is confirmed with "good" status to optimize performance.
+</Note>
+
+## Common Metadata Fields
+
+### Open Graph (Facebook)
+
+- `og:title` - Profile or page title
+- `og:description` - Profile bio or description
+- `og:image` - Profile picture URL
+- `og:url` - Canonical profile URL
+- `og:type` - Content type (profile, article, etc.)
+- `og:site_name` - Platform name
+
+### Twitter Cards
+
+- `twitter:card` - Card type (summary, player, etc.)
+- `twitter:site` - Site's Twitter handle
+- `twitter:creator` - Content creator's handle
+- `twitter:title` - Content title
+- `twitter:description` - Content description
+- `twitter:image` - Image URL
+
+### Schema.org
+
+- `name` - Person or organization name
+- `description` - Profile description
+- `image` - Profile image
+- `url` - Website URL
+
+## Performance Considerations
+
+### Memory Usage
+
+Metadata extraction is memory-efficient as it:
+- Filters out unnecessary meta tags
+- Combines duplicates
+- Only processes confirmed profiles
+
+### Processing Time
+
+Extraction adds minimal overhead:
+- Metadata: ~10-50ms per profile
+- Patterns: Depends on regex complexity and source size
+- Total: Usually less than 100ms additional per profile
+
+### Optimization Tips
+
+1. **Use with filtering**: Combine with `--filter good` to extract only from confirmed profiles
+2. **Limit websites**: Use `--websites` or `--top` to reduce the number of profiles processed
+3. **Choose wisely**: Only enable extraction when you need the additional intelligence
+
+```bash
+# Optimized extraction command
+node app.js --username "johndoe" --metadata --extract \
+  --filter good --top 50
+```
+
+## Practical Applications
+
+### OSINT Investigations
+
+- Build comprehensive profiles across platforms
+- Find hidden connections between accounts
+- Identify real names and contact information
+- Map social networks and relationships
+
+### Data Correlation
+
+```bash
+# Extract metadata from multiple related profiles
+node app.js --username "johndoe,jdoe,john.doe" \
+  --metadata --extract --filter good
+```
+
+This helps identify:
+- Shared email addresses
+- Common profile pictures
+- Consistent bio information
+- Cross-platform links
+
+### Security Research
+
+- Identify information leakage
+- Find exposed personal data
+- Map digital footprints
+- Assess privacy exposure
+
+## Output Formats
+
+Extracted data is available in multiple formats:
+
+### JSON Format
+
+```bash
+node app.js --username "johndoe" --metadata --extract --output json > output.json
+```
+
+### Pretty Format
+
+```bash
+node app.js --username "johndoe" --metadata --extract --output pretty
+```
+
+### Log Files
+
+All extraction results are automatically logged:
+
+```bash
+node app.js --username "johndoe" --metadata --extract --logs
+# Results saved to: logs/[uuid]_log.txt
+```
+
+<Warning>
+Be mindful of privacy and legal considerations when extracting and storing personal information. Always ensure you have proper authorization for OSINT activities.
+</Warning>

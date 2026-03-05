@@ -1,0 +1,593 @@
+---
+title: Filtering and Selection
+description: Filter profiles by country, type, ranking, quality, and status
+---
+
+Social Analyzer provides comprehensive filtering capabilities to focus investigations on specific platforms, geographic regions, or quality thresholds. Effective filtering reduces noise and improves analysis efficiency.
+
+## Overview
+
+Filtering options include:
+
+- **Quality Filtering**: Filter by detection quality (good, maybe, bad)
+- **Status Filtering**: Filter by profile status (detected, unknown, failed)
+- **Country Filtering**: Select websites by country
+- **Type Filtering**: Select websites by category
+- **Ranking Filtering**: Select top-ranked websites
+- **Website Filtering**: Select specific websites
+
+## Quality Filtering
+
+Quality filtering controls which profiles appear in results based on detection confidence.
+
+### Filter Options
+
+- `good` - Profiles with 100% match rate (default)
+- `maybe` - Profiles with 50-99% match rate
+- `bad` - Profiles with 0-49% match rate
+- `all` - All profiles regardless of quality
+- Comma-separated combinations: `good,maybe` or `good,bad`
+
+### How It Works
+
+From the CLI help:
+```
+--filter    Filter detected profiles by good, maybe or bad
+            You can combine them with comma (good,bad) or use all
+```
+
+Implementation:
+```javascript
+if (argv.filter.includes('all')) {
+  // Return all profiles
+} else {
+  // Filter by status
+  temp_detected.detected = temp_detected.detected
+    .filter(item => argv.filter.includes(item.status))
+}
+```
+
+### Detection Quality Levels
+
+From `fast-scan.js:124-133` and `slow-scan.js:124-133`:
+
+```javascript
+const temp_value = ((temp_profile.found / detections_count) * 100).toFixed(2)
+temp_profile.rate = '%' + temp_value
+
+if (temp_value >= 100.00) {
+  temp_profile.status = 'good'
+} else if (temp_value >= 50.00 && temp_value < 100.00) {
+  temp_profile.status = 'maybe'
+} else {
+  temp_profile.status = 'bad'
+}
+```
+
+### Usage Examples
+
+```bash
+# Only show confirmed profiles (default)
+node app.js --username "johndoe" --filter good
+
+# Show both confirmed and possible profiles
+node app.js --username "johndoe" --filter good,maybe
+
+# Show all profiles including uncertain ones
+node app.js --username "johndoe" --filter all
+
+# Only show uncertain profiles for investigation
+node app.js --username "johndoe" --filter maybe,bad
+```
+
+<Tip>
+Start with `--filter good` for initial investigations. Expand to `good,maybe` if you need more leads to investigate.
+</Tip>
+
+## Status Filtering
+
+Status filtering controls which profile types appear based on detection outcome.
+
+### Filter Options
+
+- `detected` - Successfully detected profiles
+- `unknown` - Profiles with unknown status
+- `failed` - Failed connection or timeout
+- `all` - All profiles regardless of status
+- Comma-separated combinations: `detected,failed`
+
+### Usage
+
+From the CLI help:
+```
+--profiles  Filter profiles by detected, unknown or failed
+            You can combine them with comma (detected,failed) or use all
+```
+
+### Examples
+
+```bash
+# Only show detected profiles (most common)
+node app.js --username "johndoe" --profiles detected
+
+# Show detected and failed for troubleshooting
+node app.js --username "johndoe" --profiles detected,failed
+
+# Show all including failures
+node app.js --username "johndoe" --profiles all
+```
+
+<Note>
+Failed profiles usually indicate network issues, rate limiting, or platform changes. Use `--profiles all` to see what's failing.
+</Note>
+
+## Country Filtering
+
+Filter websites by country of origin or primary audience.
+
+### How It Works
+
+From the app.js implementation:
+```javascript
+if (argv.countries != 'all') {
+  const list_of_countries = argv.countries.toLowerCase().split(' ')
+  
+  for (let i = 0; i < helper.websites_entries.length; i++) {
+    if (helper.websites_entries[i].country.toLowerCase() !== '' && 
+        list_of_countries.includes(helper.websites_entries[i].country.toLowerCase())) {
+      helper.websites_entries[i].selected = 'true'
+    } else {
+      helper.websites_entries[i].selected = 'false'
+    }
+  }
+}
+```
+
+### Usage
+
+From the CLI help:
+```
+--countries  Select websites by country or countries separated by space
+              Example: us br ru
+```
+
+### Examples
+
+```bash
+# Search only US-based websites
+node app.js --username "johndoe" --countries us
+
+# Search multiple countries
+node app.js --username "johndoe" --countries "us uk ca"
+
+# Brazil and Russia
+node app.js --username "johndoe" --countries "br ru"
+
+# All countries (default)
+node app.js --username "johndoe" --countries all
+```
+
+### Common Country Codes
+
+- `us` - United States
+- `uk` - United Kingdom
+- `ca` - Canada
+- `au` - Australia
+- `de` - Germany
+- `fr` - France
+- `br` - Brazil
+- `ru` - Russia
+- `cn` - China
+- `jp` - Japan
+- `in` - India
+
+<Tip>
+Use country filtering when investigating targets in specific regions to reduce scan time and focus on relevant platforms.
+</Tip>
+
+## Type Filtering
+
+Filter websites by category or content type.
+
+### How It Works
+
+From the app.js implementation:
+```javascript
+if (argv.type != 'all') {
+  let websites_entries_filtered = helper.websites_entries
+    .filter((item) => item.selected === 'true')
+  
+  websites_entries_filtered = websites_entries_filtered
+    .filter((item) => item.type.toLowerCase().includes(argv.type.toLowerCase()))
+  
+  // Mark matching websites as selected
+  await websites_entries_filtered.forEach(async function (value, i) {
+    await search_and_change(websites_entries_filtered[i], {
+      selected: 'true'
+    })
+  })
+}
+```
+
+### Available Types
+
+Common website types include:
+
+- `social` - Social networking platforms
+- `music` - Music and audio platforms
+- `video` - Video sharing platforms
+- `adult` - Adult content platforms
+- `gaming` - Gaming platforms
+- `business` - Professional networking
+- `dating` - Dating platforms
+- `forum` - Forum and discussion sites
+- `tech` - Technology platforms
+- `art` - Art and design platforms
+
+### Usage
+
+From the CLI help:
+```
+--type  Select websites by type (Adult, Music etc)
+```
+
+### Examples
+
+```bash
+# Search only music platforms
+node app.js --username "johndoe" --type music
+
+# Search social media platforms
+node app.js --username "johndoe" --type social
+
+# Search gaming platforms
+node app.js --username "johndoe" --type gaming
+
+# Search adult platforms
+node app.js --username "johndoe" --type adult
+
+# All types (default)
+node app.js --username "johndoe" --type all
+```
+
+<Warning>
+Type filtering uses substring matching, so searching for "social" will match "social media", "social network", etc.
+</Warning>
+
+## Ranking Filtering
+
+Filter websites by Alexa ranking to focus on popular platforms.
+
+### How It Works
+
+From the app.js implementation:
+```javascript
+const top_number = parseInt(argv.top.replace(/[^0-9]/g, ''))
+
+let websites_entries_filtered = helper.websites_entries
+  .filter((item) => item.selected === 'true')
+
+websites_entries_filtered = websites_entries_filtered
+  .filter((item) => item.global_rank !== 0)
+
+websites_entries_filtered.sort(function (a, b) {
+  return a.global_rank - b.global_rank
+})
+
+// Select top N websites
+for (let i = 0; i < top_number && i < websites_entries_filtered.length; i++) {
+  await search_and_change(websites_entries_filtered[i], {
+    selected: 'true'
+  })
+}
+```
+
+### Usage
+
+From the CLI help:
+```
+--top  Select top websites as 10, 50 etc...
+       [--websites is not needed]
+```
+
+### Examples
+
+```bash
+# Search top 10 websites
+node app.js --username "johndoe" --top 10
+
+# Search top 50 websites
+node app.js --username "johndoe" --top 50
+
+# Search top 100 websites
+node app.js --username "johndoe" --top 100
+
+# Top 200 for comprehensive scan
+node app.js --username "johndoe" --top 200
+```
+
+### Ranking Benefits
+
+- **Faster Scans**: Focus on most popular platforms
+- **Higher Hit Rate**: Popular sites more likely to have profiles
+- **Resource Efficient**: Reduces unnecessary checks
+- **Strategic Targeting**: Prioritize high-impact platforms
+
+<Tip>
+For most investigations, `--top 50` provides a good balance between coverage and speed.
+</Tip>
+
+## Website Filtering
+
+Select specific websites to search.
+
+### Usage
+
+From the CLI help:
+```
+--websites  A website or websites separated by space
+            Example: youtube, tiktok or tumblr
+```
+
+### Examples
+
+```bash
+# Search single website
+node app.js --username "johndoe" --websites twitter
+
+# Search multiple specific websites
+node app.js --username "johndoe" --websites "twitter facebook instagram"
+
+# Search tech platforms
+node app.js --username "johndoe" --websites "github gitlab stackoverflow"
+
+# Search media platforms
+node app.js --username "johndoe" --websites "youtube tiktok twitch"
+```
+
+### List Available Websites
+
+```bash
+# Show all available websites
+node app.js --list
+```
+
+<Note>
+Website names should match those in the detection database. Use `--list` to see exact names.
+</Note>
+
+## Combining Filters
+
+Filters can be combined for precise targeting.
+
+### Multiple Filter Examples
+
+```bash
+# Top US social media sites, good matches only
+node app.js --username "johndoe" \
+  --countries us \
+  --type social \
+  --top 20 \
+  --filter good
+
+# Specific websites with quality filter
+node app.js --username "johndoe" \
+  --websites "twitter facebook linkedin" \
+  --filter good,maybe
+
+# Country + type + ranking
+node app.js --username "johndoe" \
+  --countries "us uk" \
+  --type music \
+  --top 30
+
+# All filters combined
+node app.js --username "johndoe" \
+  --countries us \
+  --type social \
+  --top 50 \
+  --filter good \
+  --profiles detected
+```
+
+### Filter Priority
+
+Filters are applied in this order:
+
+1. **Countries**: First filters by country
+2. **Type**: Then filters by category
+3. **Ranking**: Then selects top N
+4. **Websites**: Or selects specific sites
+5. **Quality**: Finally filters results by match quality
+6. **Status**: Finally filters by detection status
+
+## Performance Impact
+
+### Scan Time Comparison
+
+| Filter Configuration | Websites Checked | Typical Time |
+|---------------------|------------------|-------------|
+| No filters (all) | 1000+ | 10-15 minutes |
+| `--top 100` | 100 | 2-3 minutes |
+| `--top 50` | 50 | 1-2 minutes |
+| `--top 10` | 10 | 20-30 seconds |
+| `--websites "twitter facebook"` | 2 | 5-10 seconds |
+
+### Memory Usage
+
+- More websites = more memory for parallel processing
+- Fast mode: ~15 concurrent workers
+- Slow mode: ~8 concurrent browser instances
+
+### Optimization Strategies
+
+```bash
+# Fast initial scan - top platforms only
+node app.js --username "johndoe" --top 20 --filter good
+
+# Targeted deep scan - specific platforms
+node app.js --username "johndoe" \
+  --websites "twitter facebook linkedin github" \
+  --mode slow --metadata --extract
+
+# Regional scan - country specific
+node app.js --username "johndoe" \
+  --countries us --top 50 --filter good,maybe
+
+# Category scan - specific interest
+node app.js --username "johndoe" \
+  --type gaming --filter good
+```
+
+## Practical Workflows
+
+### Initial Investigation
+
+```bash
+# Phase 1: Quick scan of top sites
+node app.js --username "johndoe" --top 20 --filter good
+
+# Phase 2: Expand to more sites if hits found
+node app.js --username "johndoe" --top 100 --filter good
+
+# Phase 3: Deep scan with metadata
+node app.js --username "johndoe" \
+  --top 50 --filter good --metadata --extract
+```
+
+### Targeted Investigation
+
+```bash
+# Focus on professional platforms
+node app.js --username "johndoe" \
+  --websites "linkedin github stackoverflow stackexchange"
+
+# Focus on social media
+node app.js --username "johndoe" \
+  --type social --top 30 --filter good
+
+# Focus on regional platforms
+node app.js --username "johndoe" \
+  --countries "ru cn" --filter good
+```
+
+### Correlation Analysis
+
+```bash
+# Compare multiple usernames on same platforms
+node app.js --username "johndoe,janedoe" \
+  --top 50 --filter good --metadata
+
+# Check specific variants across platforms
+node app.js --username "johndoe,jdoe,john_doe" \
+  --websites "twitter facebook instagram" \
+  --filter good,maybe
+```
+
+## Output Filtering
+
+Beyond search filtering, output can be refined:
+
+### Options Parameter
+
+From the CLI help:
+```
+--options  Show the following when a profile is found: 
+           link, rate, title or text
+```
+
+### Method Parameter
+
+From the CLI help:
+```
+--method  find -> show detected profiles
+          get -> show all profiles regardless detected or not
+          all -> combine find & get
+```
+
+### Examples
+
+```bash
+# Show only links
+node app.js --username "johndoe" --options link
+
+# Show links and detection rates
+node app.js --username "johndoe" --options "link rate"
+
+# Show all profile information
+node app.js --username "johndoe" --options "link rate title text"
+
+# Different methods
+node app.js --username "johndoe" --method find  # Detected only
+node app.js --username "johndoe" --method get   # All attempts
+node app.js --username "johndoe" --method all   # Combined
+```
+
+## Best Practices
+
+### Start Narrow, Expand Wide
+
+1. Begin with `--top 20 --filter good`
+2. If hits found, expand to `--top 100`
+3. Finally scan all with `--filter good,maybe`
+
+### Use Appropriate Filters
+
+- **Time-sensitive**: Use `--top 10` or specific `--websites`
+- **Comprehensive**: Use `--top 100` or `--type`
+- **Regional**: Use `--countries`
+- **Category**: Use `--type`
+
+### Combine with Extraction
+
+```bash
+# Filter to good matches, then extract deeply
+node app.js --username "johndoe" \
+  --top 50 --filter good \
+  --metadata --extract --mode slow
+```
+
+### Monitor Performance
+
+```bash
+# Add logs to track progress
+node app.js --username "johndoe" \
+  --top 50 --filter good --logs
+```
+
+<Tip>
+Save filtered results to JSON for further processing: `--output json > results.json`
+</Tip>
+
+## Troubleshooting
+
+### No Results Found
+
+**Problem**: Filtering too aggressively
+
+**Solutions**:
+- Expand filter from `good` to `good,maybe`
+- Increase `--top N` value
+- Remove `--type` or `--countries` restrictions
+- Try different username variations
+
+### Too Many Results
+
+**Problem**: Need to narrow scope
+
+**Solutions**:
+- Use `--filter good` only
+- Reduce `--top N` value
+- Add `--type` filtering
+- Use `--countries` for regional focus
+- Specify exact `--websites`
+
+### Slow Performance
+
+**Problem**: Too many websites selected
+
+**Solutions**:
+- Use `--top 50` instead of checking all
+- Switch to fast mode instead of slow
+- Remove `--metadata` and `--extract` for initial scans
+- Filter by `--type` or `--countries`

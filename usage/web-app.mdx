@@ -1,0 +1,519 @@
+---
+title: 'Web Application'
+description: 'Use Social Analyzer through the interactive web interface'
+---
+
+The web application provides the most feature-rich and user-friendly way to use Social Analyzer. It includes all detection modes, visualization tools, metadata extraction, and an intuitive interface for OSINT investigations.
+
+<Note>
+  The web application is the **preferred method** for using Social Analyzer as it provides access to all features including advanced visualizations and real-time progress monitoring.
+</Note>
+
+## Quick Start
+
+<Steps>
+  <Step title="Install dependencies">
+    Install Node.js and required system packages:
+    
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y firefox-esr tesseract-ocr git nodejs npm
+    ```
+  </Step>
+  
+  <Step title="Clone and setup">
+    ```bash
+    git clone https://github.com/qeeqbox/social-analyzer.git
+    cd social-analyzer
+    npm update
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Start the server">
+    ```bash
+    npm start
+    ```
+    
+    The server will start on port 9005 (or the port specified in `PORT` environment variable).
+  </Step>
+  
+  <Step title="Open in browser">
+    Navigate to:
+    ```
+    http://localhost:9005/app.html
+    ```
+  </Step>
+</Steps>
+
+## Interface Overview
+
+The web interface consists of several key sections:
+
+### Search Panel
+
+The main search interface where you configure your analysis:
+
+- **Username field**: Enter one or multiple usernames (comma-separated)
+- **Website selector**: Choose which platforms to search
+- **Analysis options**: Select detection modes and features
+- **Advanced settings**: Configure proxy, user-agent, and API keys
+
+### Results Panel
+
+Displays detected profiles with:
+
+- Detection confidence rating (percentage)
+- Profile metadata and screenshots
+- Extracted information (links, patterns)
+- Quality indicators (good/maybe/bad)
+
+### Visualization Panel
+
+Shows force-directed graphs and statistical analysis when metadata extraction is enabled.
+
+## Search Configuration
+
+### Username Input
+
+<Tabs>
+  <Tab title="Single Username">
+    Enter a single username to analyze:
+    ```
+    johndoe
+    ```
+  </Tab>
+  
+  <Tab title="Multiple Usernames">
+    Enter multiple usernames separated by commas for correlation analysis:
+    ```
+    johndoe,janedoe,john_doe
+    ```
+    
+    This searches all usernames and can help identify related accounts.
+  </Tab>
+</Tabs>
+
+### Website Selection
+
+<Tabs>
+  <Tab title="Select All">
+    Check the "Select All" option to search across all 900+ supported platforms.
+  </Tab>
+  
+  <Tab title="Select by Category">
+    Filter websites by type:
+    - Social Networks
+    - Music Platforms
+    - Gaming Sites
+    - Adult Content
+    - Business Networks
+    - And more...
+  </Tab>
+  
+  <Tab title="Select Top Ranked">
+    Choose only the most popular websites:
+    - Top 10
+    - Top 50
+    - Top 100
+    - Top 500
+  </Tab>
+  
+  <Tab title="Select by Country">
+    Filter by geographical region:
+    - United States (us)
+    - Brazil (br)
+    - Russia (ru)
+    - India (in)
+    - And more...
+  </Tab>
+  
+  <Tab title="Custom Selection">
+    Manually check individual websites from the list.
+  </Tab>
+</Tabs>
+
+## Analysis Options
+
+### Detection Modes
+
+Select which detection techniques to use:
+
+<Tabs>
+  <Tab title="Fast Mode">
+    **FindUserProfilesFast** / **GetUserProfilesFast**
+    
+    - Quick detection using basic techniques
+    - HTTP-based analysis
+    - Checks for username presence in page content
+    - Recommended for initial scans
+    - Fastest execution time
+    
+    **Use when**: You need quick results or are scanning many platforms.
+  </Tab>
+  
+  <Tab title="Slow Mode">
+    **FindUserProfilesSlow** / **ShowUserProfilesSlow**
+    
+    - Deep analysis with advanced detection
+    - Selenium WebDriver automation
+    - JavaScript rendering
+    - OCR text recognition
+    - More accurate but slower
+    
+    **Use when**: Fast mode returns inconclusive results or you need high accuracy.
+  </Tab>
+  
+  <Tab title="Special Mode">
+    **FindUserProfilesSpecial**
+    
+    - Special detection techniques for specific platforms
+    - Facebook (phone number, name, or profile name)
+    - Gmail (example@gmail.com)
+    - Google (example@example.com)
+    
+    **Use when**: Searching for email addresses or phone numbers on major platforms.
+  </Tab>
+</Tabs>
+
+### Information Extraction
+
+<Steps>
+  <Step title="Extract Patterns">
+    Enable **ExtractPatterns** to extract:
+    - URLs and web links
+    - Email addresses
+    - Social media handles
+    - Other regex-matched patterns
+  </Step>
+  
+  <Step title="Extract Metadata">
+    Enable **ExtractMetadata** to extract:
+    - Open Graph meta tags
+    - Twitter Card data
+    - Schema.org structured data
+    - Page descriptions and keywords
+    - Profile images
+    
+    Required for visualization features.
+  </Step>
+</Steps>
+
+### Analysis Features
+
+<Tabs>
+  <Tab title="String Analysis">
+    Analyze the username structure:
+    
+    - **SplitWordsByUpperCase**: Split camelCase usernames
+    - **SplitWordsByAlphabet**: Split by character patterns
+    - **FindNumbers**: Extract numeric components
+    - **FindSymbols**: Identify special characters
+    - **ConvertNumbers**: Convert leetspeak (3 → e)
+    - **FindAges**: Guess possible ages from numbers
+  </Tab>
+  
+  <Tab title="Name Analysis">
+    - **FindOrigins**: Determine name origins and ethnicity
+    - **MostCommon**: Find most common words
+    - **WordInfo**: Get word definitions and information
+  </Tab>
+  
+  <Tab title="Lookups">
+    - **LookUps**: External API lookups (requires API keys)
+    - **CustomSearch**: Google Custom Search integration
+  </Tab>
+  
+  <Tab title="Visualization">
+    - **NetworkGraph**: Force-directed graph visualization
+    - **CategoriesStats**: Statistics by category
+    - **MetadataStats**: Metadata analysis charts
+  </Tab>
+</Tabs>
+
+## Advanced Settings
+
+Access advanced configuration via the settings panel:
+
+### Proxy Configuration
+
+```
+http://proxy.example.com:8080
+```
+
+Route requests through a proxy server for anonymity or to bypass restrictions.
+
+### Custom User-Agent
+
+```
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+```
+
+Modify the User-Agent header to simulate different browsers.
+
+### Google API Integration
+
+<Steps>
+  <Step title="Obtain API credentials">
+    Get API key and Custom Search Engine ID from Google Cloud Console.
+  </Step>
+  
+  <Step title="Enter credentials">
+    - **Google API Key**: Your API key
+    - **Google Custom Search ID**: Your CSE ID
+  </Step>
+  
+  <Step title="Enable custom search">
+    Check **CustomSearch** in analysis options.
+  </Step>
+</Steps>
+
+## Working with Results
+
+### Understanding Confidence Ratings
+
+Each detected profile receives a percentage rating:
+
+| Rating | Badge | Description |
+|--------|-------|-------------|
+| 100% | **Good** | High confidence - profile definitely exists |
+| 50-99% | **Maybe** | Medium confidence - profile likely exists |
+| Below 50% | **Bad** | Low confidence - uncertain or false positive |
+
+### Filtering Results
+
+Use the filter controls to refine results:
+
+- **Show Good**: Only high-confidence matches
+- **Show Maybe**: Include medium-confidence matches
+- **Show Bad**: Include low-confidence matches
+- **Show Unknown**: Profiles that couldn't be verified
+- **Show Failed**: Failed connection attempts
+
+### Viewing Profile Details
+
+Click on any detected profile to view:
+
+- Full profile URL
+- Page title and language
+- Extracted text content
+- Website type and country
+- Global ranking
+- Screenshots (if available)
+- Metadata (if extraction enabled)
+- Extracted patterns (if extraction enabled)
+
+### Exporting Results
+
+Results can be exported in multiple formats:
+
+1. **JSON Download**: Click "Download JSON" for machine-readable data
+2. **Copy Links**: Copy all profile links to clipboard
+3. **Screenshots**: Download captured screenshots
+
+## Visualization Features
+
+### Force-Directed Network Graph
+
+When **NetworkGraph** and **ExtractMetadata** are enabled:
+
+- Nodes represent detected profiles and extracted entities
+- Links show relationships and connections
+- Interactive: drag, zoom, and explore
+- Hover over nodes for details
+
+### Statistics Dashboards
+
+When **CategoriesStats** or **MetadataStats** are enabled:
+
+- Pie charts showing distribution by category
+- Bar charts for country distribution
+- Metadata frequency analysis
+- Language distribution
+
+## Real-Time Progress Monitoring
+
+The web interface provides live updates:
+
+- Progress bar showing completion percentage
+- Real-time log output
+- Current website being checked
+- Number of profiles found
+- Ability to cancel ongoing scans
+
+## Example Workflows
+
+### Basic Profile Search
+
+<Steps>
+  <Step title="Enter username">
+    Type the username in the search field: `johndoe`
+  </Step>
+  
+  <Step title="Select websites">
+    Choose "Top 100" for a quick scan of popular platforms.
+  </Step>
+  
+  <Step title="Enable fast mode">
+    Check **FindUserProfilesFast**.
+  </Step>
+  
+  <Step title="Start search">
+    Click "Find" and wait for results.
+  </Step>
+  
+  <Step title="Review results">
+    Browse detected profiles with good ratings.
+  </Step>
+</Steps>
+
+### Deep Investigation
+
+<Steps>
+  <Step title="Multiple usernames">
+    Enter variations: `johndoe,john_doe,johndoe99`
+  </Step>
+  
+  <Step title="Select all websites">
+    Check "Select All" for comprehensive coverage.
+  </Step>
+  
+  <Step title="Enable all extraction">
+    - Check **ExtractPatterns**
+    - Check **ExtractMetadata**
+    - Check **FindOrigins**
+  </Step>
+  
+  <Step title="Enable visualization">
+    - Check **NetworkGraph**
+    - Check **CategoriesStats**
+  </Step>
+  
+  <Step title="Use advanced mode">
+    Select **FindUserProfilesSlow** for thorough analysis.
+  </Step>
+  
+  <Step title="Analyze results">
+    Review the network graph to identify connections and patterns.
+  </Step>
+</Steps>
+
+### Targeted Category Search
+
+<Steps>
+  <Step title="Enter username">
+    Type the target username.
+  </Step>
+  
+  <Step title="Filter by category">
+    Select only "Music" or "Gaming" platforms from the list.
+  </Step>
+  
+  <Step title="Enable extraction">
+    Check **ExtractPatterns** to find linked accounts.
+  </Step>
+  
+  <Step title="Start search">
+    Click "Find" to search category-specific platforms.
+  </Step>
+</Steps>
+
+## Logs and Debugging
+
+View detailed logs in the browser console or in the log output panel:
+
+```
+[init] Detections are updated very often, make sure to get the most up-to-date ones
+[Setting] Username: johndoe
+[Starting] Checking user profiles normal
+[Checking] twitter.com
+[Checking] github.com
+[Done] Checking user profiles normal
+[Finished] Analyzing: johndoe Task: abc123
+```
+
+## API Endpoints
+
+The web app exposes several API endpoints for custom integrations:
+
+### POST /analyze_string
+
+Analyze a username:
+
+```json
+{
+  "string": "johndoe",
+  "uuid": "unique-task-id",
+  "option": "FindUserProfilesFast,ExtractMetadata"
+}
+```
+
+### GET /get_settings
+
+Retrieve current settings:
+
+```json
+{
+  "proxy": "http://proxy.example.com:8080",
+  "user_agent": "Mozilla/5.0...",
+  "websites": [...]
+}
+```
+
+### POST /save_settings
+
+Update configuration:
+
+```json
+{
+  "proxy": "http://new-proxy.com:8080",
+  "user_agent": "Custom Agent",
+  "websites": "0,1,2,5,10"
+}
+```
+
+## Security Considerations
+
+<Warning>
+  The web application is designed to run **locally only**. It does not have built-in access control or authentication. Do not expose it to the internet without proper security measures.
+</Warning>
+
+- Run only on `localhost` or trusted networks
+- Use a firewall to restrict access
+- Do not save sensitive API keys in the interface
+- Clear browser storage after sensitive investigations
+
+## Performance Tips
+
+- Start with **Fast Mode** and Top 100 websites for quick results
+- Use **Slow Mode** only when necessary (significantly slower)
+- Enable metadata extraction only when you need detailed analysis
+- Disable visualization options if not needed (reduces processing time)
+- For very thorough scans, run overnight or during off-hours
+- Use website filtering to reduce scope and increase speed
+
+## Troubleshooting
+
+**Server won't start**
+
+Check that port 9005 is not in use:
+```bash
+lsof -i :9005
+```
+
+Use a different port:
+```bash
+PORT=8080 npm start
+```
+
+**No results showing**
+
+Check browser console for errors (F12) and review server logs.
+
+**Slow performance**
+
+Reduce the number of websites or disable advanced detection modes.
+
+**Visualization not working**
+
+Ensure **ExtractMetadata** is enabled before enabling **NetworkGraph**.

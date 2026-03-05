@@ -1,97 +1,126 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Social Analyzer"
+description: "API, CLI, and Web App for analyzing and finding a person's profile across 1000+ social media websites"
 ---
 
-## Setting up
+<img
+  className="block"
+  src="https://raw.githubusercontent.com/qeeqbox/social-analyzer/main/readme/socialanalyzerlogo_.png"
+  alt="Social Analyzer Logo"
+/>
 
-Get your documentation site up and running in minutes.
+# Find profiles across 1000+ social media sites
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Social Analyzer is a powerful OSINT tool that helps you discover and analyze social media profiles across the internet. With multiple detection modes and advanced analysis capabilities, it's designed for security researchers, investigators, and anyone conducting online investigations.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
   >
-    Edit your docs locally and preview them in real time.
+    Get up and running with Social Analyzer in minutes
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Installation"
+    icon="download"
+    href="/installation"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Install via Node.js, Python, or Docker
   </Card>
   <Card
-    title="API documentation"
+    title="CLI Reference"
     icon="terminal"
-    href="/api-reference/introduction"
+    href="/api/cli-reference"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Complete command-line options and parameters
   </Card>
   <Card
-    title="Code samples"
+    title="Examples"
     icon="code"
-    href="/essentials/code"
+    href="/resources/examples"
   >
-    Add sample code to demonstrate how to use your product.
+    Real-world usage examples and patterns
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Key Features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={3}>
+  <Card title="1000+ Websites" icon="globe">
+    Search profiles across more than 1000 social media platforms and websites
+  </Card>
+  <Card title="Multiple Detection Modes" icon="magnifying-glass">
+    Fast, slow, and special detection modes for different use cases
+  </Card>
+  <Card title="String Analysis" icon="spell-check">
+    Advanced name and string analysis with permutations and combinations
+  </Card>
+  <Card title="Metadata Extraction" icon="database">
+    Extract metadata, patterns, and profile information
+  </Card>
+  <Card title="OCR Detection" icon="eye">
+    Use Tesseract OCR for image-based profile detection
+  </Card>
+  <Card title="Visualization" icon="chart-network">
+    Force-directed graphs for metadata and pattern visualization
+  </Card>
+</CardGroup>
+
+## Multiple Interfaces
+
+Social Analyzer provides three ways to interact with the tool:
+
+<CardGroup cols={3}>
+  <Card title="Node.js CLI" icon="node-js" href="/usage/cli-nodejs">
+    Command-line interface built with Node.js
+  </Card>
+  <Card title="Python CLI" icon="python" href="/usage/cli-python">
+    Python-based CLI and importable module
+  </Card>
+  <Card title="Web App" icon="browser" href="/usage/web-app">
+    Browser-based GUI for interactive analysis
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+Social Analyzer is used by law enforcement agencies and security researchers to investigate:
+
+- Cyberbullying and cyber grooming
+- Cyberstalking incidents
+- Misinformation campaigns
+- Suspicious or malicious online activities
+- Identity verification
+- OSINT investigations
+
+<Note>
+This tool is intended for legitimate security research and investigations. Always respect privacy laws and terms of service.
+</Note>
+
+## Quick Example
+
+```bash
+# Search for a username across all websites
+node app.js --username "johndoe"
+
+# Search specific websites with metadata extraction
+node app.js --username "johndoe" --websites "youtube tiktok" --metadata
+
+# Filter by top-ranked sites
+node app.js --username "johndoe" --top 100
+
+# Use Python version
+python3 -m social-analyzer --username "johndoe"
+```
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="wrench" href="/installation">
+    Set up Social Analyzer on your system
+  </Card>
+  <Card title="Your First Search" icon="search" href="/quickstart">
+    Run your first profile search
+  </Card>
+</CardGroup>

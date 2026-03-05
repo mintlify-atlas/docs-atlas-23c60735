@@ -1,0 +1,487 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about Social Analyzer"
+icon: "question"
+---
+
+## General Questions
+
+<AccordionGroup>
+  <Accordion title="What is Social Analyzer?">
+    Social Analyzer is an API, CLI, and web application for analyzing and finding a person's profile across 1000+ social media websites. It uses multiple detection techniques and a rating mechanism to identify profiles with varying levels of confidence (0-100%).
+    
+    The tool is designed for OSINT (Open Source Intelligence) investigations and can help identify profiles related to suspicious or malicious activities such as cyberbullying, cyber grooming, cyberstalking, and spreading misinformation.
+  </Accordion>
+
+  <Accordion title="Is Social Analyzer free to use?">
+    Yes, Social Analyzer is open source and free to use under the AGPL-3.0 license. The source code is available on GitHub at https://github.com/qeeqbox/social-analyzer.
+    
+    Note that some law enforcement agencies use an enhanced detection database that differs from the public version.
+  </Accordion>
+
+  <Accordion title="How many social media platforms does it search?">
+    Social Analyzer searches across 1000+ social media websites and platforms. You can view the complete list using:
+    
+    ```bash
+    python3 -m social-analyzer --list
+    ```
+    
+    The database includes major platforms like Twitter, Facebook, Instagram, GitHub, as well as hundreds of niche and regional sites.
+  </Accordion>
+
+  <Accordion title="What programming languages does Social Analyzer support?">
+    Social Analyzer is available in:
+    - **Python 3** (CLI and module)
+    - **Node.js** (CLI and web app)
+    
+    You can use it as a command-line tool or import it as a module in your Python scripts.
+  </Accordion>
+
+  <Accordion title="Can I use Social Analyzer for commercial purposes?">
+    Social Analyzer is licensed under AGPL-3.0, which requires that any derivative works or services using the code must also be open source. If you plan to use it commercially, review the license terms carefully or contact the author for alternative licensing arrangements.
+  </Accordion>
+</AccordionGroup>
+
+## Detection and Accuracy
+
+<AccordionGroup>
+  <Accordion title="How accurate is Social Analyzer?">
+    Social Analyzer uses a rating mechanism that produces confidence scores from 0 to 100%:
+    - **0-33%**: Low confidence ("No")
+    - **34-66%**: Medium confidence ("Maybe")
+    - **67-100%**: High confidence ("Yes")
+    
+    The detection system is designed to minimize false positives. Accuracy varies by website based on:
+    - Site structure and consistency
+    - Anti-bot protection measures
+    - Profile privacy settings
+    - Username availability and uniqueness
+    
+    For best results, filter for "good" status profiles (high confidence matches).
+  </Accordion>
+
+  <Accordion title="What detection methods does Social Analyzer use?">
+    Social Analyzer employs multiple detection techniques:
+    
+    1. **Normal Detection**: Standard HTTP requests and HTML parsing
+    2. **Advanced Detection**: Selenium WebDriver for JavaScript-heavy sites
+    3. **Special Detection**: Custom logic for specific platforms (Facebook, Gmail, Google)
+    4. **OCR Detection**: Optical character recognition using Tesseract
+    
+    You can select detection modes using the `--mode` flag:
+    - `fast`: FindUserProfilesFast (HTTP only)
+    - `slow`: FindUserProfilesSlow (includes WebDriver)
+    - `special`: FindUserProfilesSpecial (platform-specific methods)
+  </Accordion>
+
+  <Accordion title="Why do I get 'Maybe' results?">
+    "Maybe" results (medium confidence) occur when:
+    - The username exists but the profile is private or restricted
+    - The page structure is ambiguous
+    - Anti-bot protections interfere with detection
+    - The username matches but additional verification is needed
+    
+    To see only high-confidence results:
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --filter "good"
+    ```
+    
+    Manually verify "maybe" results by visiting the URLs directly.
+  </Accordion>
+
+  <Accordion title="Can Social Analyzer detect deleted or suspended accounts?">
+    Generally no. Social Analyzer detects active, publicly accessible profiles. Deleted or suspended accounts typically return "not found" pages, which are filtered out.
+    
+    However, you can:
+    - Use Wayback Machine integration to find archived profiles
+    - Check the `failed` results which might include recently deleted accounts
+    - Use specialized forensic tools for deleted content recovery
+  </Accordion>
+</AccordionGroup>
+
+## Usage and Features
+
+<AccordionGroup>
+  <Accordion title="What's the difference between fast and slow mode?">
+    **Fast Mode** (`--mode fast`):
+    - Uses only HTTP requests (no browser automation)
+    - Faster execution (seconds to minutes)
+    - Lower resource usage
+    - May miss JavaScript-rendered content
+    - Best for quick scans of many users
+    
+    **Slow Mode** (`--mode slow`):
+    - Uses Selenium WebDriver (browser automation)
+    - Slower execution (minutes to hours)
+    - Higher accuracy for modern web apps
+    - Captures JavaScript-rendered content
+    - Best for thorough investigation of specific users
+  </Accordion>
+
+  <Accordion title="How do I search for multiple usernames at once?">
+    Separate usernames with commas (no spaces):
+    
+    ```bash
+    python3 -m social-analyzer --username "johndoe,janedoe,john_doe123"
+    ```
+    
+    This is useful for:
+    - Correlating multiple aliases of the same person
+    - Batch processing investigation lists
+    - Finding connections between accounts
+    - Testing username variations
+  </Accordion>
+
+  <Accordion title="What is metadata extraction?">
+    Metadata extraction (`--metadata` flag) pulls additional information from detected profiles:
+    - Profile descriptions and bios
+    - Posted content snippets
+    - Profile images and avatars
+    - Account creation dates (when available)
+    - Location information
+    - Social connections (followers, following)
+    
+    Usage:
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --metadata --extract
+    ```
+    
+    This feature uses the QeeqBox OSINT module for enhanced data collection.
+  </Accordion>
+
+  <Accordion title="Can I search only specific websites?">
+    Yes, use the `--websites` parameter:
+    
+    ```bash
+    # Single site
+    python3 -m social-analyzer --username "johndoe" --websites "github"
+    
+    # Multiple sites (space-separated)
+    python3 -m social-analyzer --username "johndoe" --websites "github twitter instagram"
+    ```
+    
+    This significantly speeds up searches when you know which platforms to target.
+  </Accordion>
+
+  <Accordion title="How do I export results for analysis?">
+    Export results in JSON format:
+    
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --output "json" > results.json
+    ```
+    
+    You can then:
+    - Import into spreadsheets (Excel, Google Sheets)
+    - Process with data analysis tools
+    - Integrate with other OSINT tools
+    - Store in databases
+    - Generate reports
+    
+    See the [Integration Guide](/resources/integration) for more examples.
+  </Accordion>
+
+  <Accordion title="Does Social Analyzer work with proxies?">
+    Yes, you can configure proxy settings in the code by modifying the headers and session configuration. For custom proxy usage:
+    
+    ```python
+    from importlib import import_module
+    
+    SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+    SocialAnalyzer.headers = {
+        "User-Agent": "Your-Custom-User-Agent"
+    }
+    # Add proxy configuration to session
+    ```
+    
+    Proxies are useful for:
+    - Avoiding rate limiting
+    - Bypassing geo-restrictions
+    - Distributing load
+    - Maintaining anonymity
+  </Accordion>
+</AccordionGroup>
+
+## Technical Questions
+
+<AccordionGroup>
+  <Accordion title="What are the system requirements?">
+    **Minimum Requirements:**
+    - Python 3.6+ or Node.js 12+
+    - 2 GB RAM
+    - Internet connection
+    - 500 MB disk space
+    
+    **Recommended:**
+    - Python 3.8+ or Node.js 14+
+    - 4 GB RAM
+    - SSD storage
+    - Stable internet connection
+    
+    **Optional Components:**
+    - Firefox or Chrome (for screenshots and advanced detection)
+    - Tesseract OCR (for OCR-based detection)
+    - Docker (for containerized deployment)
+  </Accordion>
+
+  <Accordion title="Can I run Social Analyzer on a server without a GUI?">
+    Yes, Social Analyzer works in headless environments. However:
+    
+    - **CLI mode**: Works perfectly without GUI
+    - **Screenshots**: Require a display or virtual display (Xvfb)
+    - **Advanced detection**: May need headless browser configuration
+    
+    For headless servers:
+    ```bash
+    # Install virtual display
+    sudo apt-get install xvfb
+    
+    # Run with virtual display
+    xvfb-run python3 -m social-analyzer --username "johndoe"
+    ```
+    
+    Alternatively, use Docker which handles headless configuration automatically.
+  </Accordion>
+
+  <Accordion title="How long does a typical search take?">
+    Search time varies significantly based on:
+    
+    **Search Scope:**
+    - All 1000+ sites: 10-30 minutes
+    - Top 100 sites: 2-5 minutes
+    - Specific sites: 10-60 seconds
+    
+    **Detection Mode:**
+    - Fast mode: 50-200ms per site
+    - Slow mode: 2-10 seconds per site
+    
+    **Additional Features:**
+    - Metadata extraction: +30-50%
+    - Screenshots: +100-200%
+    
+    **Optimization Tips:**
+    - Use `--top` to limit site count
+    - Use `--websites` for specific targets
+    - Increase worker count (code modification)
+    - Use Docker grid mode for parallel processing
+  </Accordion>
+
+  <Accordion title="Does Social Analyzer store any data?">
+    Social Analyzer itself does not maintain a persistent database of searches or results. However:
+    
+    **Data Storage:**
+    - Logs are saved to temp directory if `--logs` flag is used
+    - Screenshots are saved locally if `--screenshots` flag is used
+    - JSON output is saved only if you redirect it to a file
+    
+    **Privacy Notes:**
+    - No data is sent to external servers (except target websites)
+    - All processing is local
+    - You control all output and storage
+    - Clean up logs and screenshots after use
+    
+    The tool is designed for local use, not as a service.
+  </Accordion>
+
+  <Accordion title="Can I add custom websites to the database?">
+    Yes, you can modify the `data/sites.json` file to add new websites. Each entry requires:
+    
+    ```json
+    {
+      "url": "example.com",
+      "selected": "false",
+      "detections": [
+        {
+          "return": "true",
+          "check": "username in page"
+        }
+      ]
+    }
+    ```
+    
+    However:
+    - Manual testing is required for each site
+    - Detection logic must be customized per site
+    - Anti-bot measures may affect success
+    - Consider contributing back to the main project
+  </Accordion>
+
+  <Accordion title="What's the difference between 'find' and 'get' methods?">
+    The `--method` parameter controls result filtering:
+    
+    **find**: Returns only detected profiles (positive matches)
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --method "find"
+    ```
+    
+    **get**: Returns all profiles regardless of detection status
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --method "get"
+    ```
+    
+    **all**: Combines both approaches (default behavior)
+    ```bash
+    python3 -m social-analyzer --username "johndoe" --method "all"
+    ```
+    
+    Most users should use "find" or "all" for investigation purposes.
+  </Accordion>
+</AccordionGroup>
+
+## Legal and Ethical Questions
+
+<AccordionGroup>
+  <Accordion title="Is using Social Analyzer legal?">
+    Using Social Analyzer to search public information is generally legal, but:
+    
+    **Legal Considerations:**
+    - Only searches publicly accessible information
+    - Must comply with local laws and regulations
+    - Some jurisdictions have strict privacy laws
+    - Terms of service of target platforms may prohibit automated access
+    
+    **Recommended Usage:**
+    - Law enforcement investigations
+    - Security research
+    - Personal reputation management
+    - Cybersecurity threat intelligence
+    
+    **Prohibited Usage:**
+    - Harassment or stalking
+    - Identity theft
+    - Unauthorized surveillance
+    - Violating platform terms of service
+    
+    Consult legal counsel if you're unsure about your specific use case.
+  </Accordion>
+
+  <Accordion title="What are the ethical considerations?">
+    When using Social Analyzer, consider:
+    
+    **Ethical Guidelines:**
+    1. Only investigate with legitimate purpose
+    2. Respect privacy and personal boundaries
+    3. Handle discovered information responsibly
+    4. Don't use for harassment or intimidation
+    5. Secure any collected data appropriately
+    6. Follow your organization's ethics policies
+    
+    **Best Practices:**
+    - Document your investigation purpose
+    - Obtain proper authorization when required
+    - Minimize data collection to what's necessary
+    - Delete data when no longer needed
+    - Protect subject privacy in reports
+  </Accordion>
+
+  <Accordion title="Can I use this tool for background checks?">
+    Social Analyzer can be used as part of background research, but:
+    
+    **Important Limitations:**
+    - Cannot verify identity with certainty
+    - May find profiles of different people with same username
+    - Public profiles may not reflect current status
+    - Information may be outdated or inaccurate
+    
+    **Recommendations:**
+    - Use as supplementary tool, not primary source
+    - Verify findings through multiple methods
+    - Comply with Fair Credit Reporting Act (US) if applicable
+    - Consider hiring professional background check services
+    - Always verify critical information independently
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Why am I getting so many failed results?">
+    Common reasons for failed results:
+    
+    1. **Network Issues**: Check your internet connection
+    2. **Rate Limiting**: Websites blocking automated requests
+    3. **Outdated Detections**: Site structure changed since last update
+    4. **Anti-Bot Protection**: Cloudflare, CAPTCHA, etc.
+    5. **Timeout Too Low**: Increase with `--timeout 15`
+    
+    **Solutions:**
+    ```bash
+    # Filter to only show detected profiles
+    python3 -m social-analyzer --username "johndoe" --profiles "detected"
+    
+    # Increase timeout
+    python3 -m social-analyzer --username "johndoe" --timeout 20
+    ```
+    
+    See the [Troubleshooting Guide](/resources/troubleshooting) for detailed solutions.
+  </Accordion>
+
+  <Accordion title="What if I find a bug or issue?">
+    If you encounter problems:
+    
+    1. **Check GitHub Issues**: https://github.com/qeeqbox/social-analyzer/issues
+    2. **Search for similar problems** - may already be solved
+    3. **Update to latest version**:
+       ```bash
+       pip3 install --upgrade social-analyzer
+       ```
+    4. **Open a new issue** with:
+       - Operating system
+       - Python/Node.js version
+       - Complete error message
+       - Steps to reproduce
+       - Command you ran
+    
+    **Note:** For private module issues, contact the author directly (don't open GitHub issues).
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+<AccordionGroup>
+  <Accordion title="Where can I get more help?">
+    **Resources:**
+    - **Documentation**: https://github.com/qeeqbox/social-analyzer
+    - **GitHub Issues**: https://github.com/qeeqbox/social-analyzer/issues
+    - **Wiki**: https://github.com/qeeqbox/social-analyzer/wiki
+    - **Examples**: See the [Usage Examples](/resources/examples) page
+    - **Integration Guide**: See [Integration Guide](/resources/integration)
+    
+    **Community:**
+    - Search existing GitHub issues
+    - Check closed issues for solutions
+    - Review pull requests for upcoming features
+  </Accordion>
+
+  <Accordion title="How can I contribute to the project?">
+    Contributions are welcome!
+    
+    **Ways to Contribute:**
+    - Report bugs and issues
+    - Suggest new features
+    - Add detection rules for new websites
+    - Improve documentation
+    - Submit pull requests with fixes
+    - Share usage examples and tutorials
+    - Test and provide feedback
+    
+    **Getting Started:**
+    1. Fork the repository
+    2. Create a feature branch
+    3. Make your changes
+    4. Test thoroughly
+    5. Submit a pull request
+    
+    See CONTRIBUTING.md in the repository for detailed guidelines.
+  </Accordion>
+
+  <Accordion title="Is there a commercial or enterprise version?">
+    The standard version is open source and free. However:
+    
+    - Some law enforcement agencies use an enhanced detection database
+    - The public version differs from the professional version
+    - For enterprise licensing or custom features, contact the author directly
+    - Private modules are available for specific use cases
+    
+    Contact: gigaqeeq@gmail.com
+  </Accordion>
+</AccordionGroup>

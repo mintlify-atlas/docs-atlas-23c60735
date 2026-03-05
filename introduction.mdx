@@ -1,0 +1,115 @@
+---
+title: Introduction
+description: API, CLI, and Web App for analyzing and finding profiles across 1000+ social media websites
+---
+
+# Social Analyzer
+
+Social Analyzer is an OSINT (Open Source Intelligence) tool that helps you find and analyze a person's profile across more than 1000 social media websites. It provides multiple interfaces including a Web App, Node.js CLI, and Python CLI to conduct social media investigations.
+
+## What is Social Analyzer?
+
+Social Analyzer searches for user profiles across a vast database of social media platforms using advanced detection techniques. The tool utilizes a sophisticated rating mechanism that produces detection scores from 0 to 100 (No-Maybe-Yes), designed to minimize false positives.
+
+<Note>
+This project is currently used by some law enforcement agencies in countries where resources are limited. The detection database used by these agencies differs from the publicly available version.
+</Note>
+
+## Key Capabilities
+
+<CardGroup cols={2}>
+  <Card title="Multi-Platform Search" icon="magnifying-glass">
+    Search across 1000+ social media websites simultaneously with a single username
+  </Card>
+  
+  <Card title="Advanced Detection" icon="radar">
+    Multiple detection layers including OCR, normal, advanced, and special techniques
+  </Card>
+  
+  <Card title="Metadata Extraction" icon="database">
+    Extract metadata and patterns from discovered profiles with visualization support
+  </Card>
+  
+  <Card title="Flexible Interfaces" icon="window">
+    Choose between Web App (preferred), Node.js CLI, or Python CLI based on your workflow
+  </Card>
+</CardGroup>
+
+## Core Features
+
+### Detection & Analysis
+- **String & Name Analysis**: Permutations and combinations of usernames
+- **Multi-Profile Search**: Correlate multiple profiles using comma-separated usernames
+- **Multilayer Detections**: OCR, normal, advanced, and special detection modes
+- **Rating Mechanism**: 0-100 detection confidence score to reduce false positives
+
+### Search Capabilities
+- Search by **top ranking** (Alexa) or by **country**
+- Filter by website **type** (adult, music, etc.)
+- **Custom search queries** via Google API and DuckDuckGo API (optional)
+- **Search engine lookup** integration (Google API - optional)
+
+### Data Extraction
+- Profile screenshots (requires latest Chrome)
+- Title, description, and metadata extraction
+- Pattern extraction and visualization using Ixora
+- Force-directed graph for metadata relationships
+- Profile statistics and category information
+
+### Advanced Options
+- Custom user-agent, proxy, timeout, and implicit wait settings
+- Adjustable worker threads (default: 15)
+- Re-checking failed profiles
+- Filter results by good, maybe, or bad confidence
+- Export analysis as JSON
+- Screenshot capture of detected profiles
+
+## Special Detections
+
+Social Analyzer includes specialized detection modules for specific platforms:
+
+- **Facebook**: Search by phone number, name, or profile name
+- **Gmail**: Lookup by email address (example@gmail.com)
+- **Google**: General Google account lookup (example@example.com)
+
+## Use Cases
+
+The analysis and public information extracted from Social Analyzer can help investigate:
+
+- Cyberbullying campaigns
+- Cyber grooming activities
+- Cyberstalking incidents
+- Misinformation spreading
+- Suspicious or malicious profile networks
+
+<Warning>
+Social Analyzer is meant to be used locally, not as a service. It does not have access control mechanisms and should be treated as a security-focused project. Always use responsibly and within legal boundaries.
+</Warning>
+
+## How It Works
+
+Social Analyzer uses multiple techniques to find profiles:
+
+1. **Fast Mode** (FindUserProfilesFast): Quick HTTPS library-based scanning
+2. **Slow Mode** (FindUserProfilesSlow): Thorough Webdriver-based detection with rendering
+3. **Special Mode** (FindUserProfilesSpecial): Platform-specific detection for Facebook, Gmail, Google
+
+The detection engine analyzes responses using various signals including:
+- HTTP status codes and response patterns
+- Page content and metadata
+- Visual elements (OCR when enabled)
+- Profile-specific indicators
+
+Each detection is assigned a confidence rating to help you assess the likelihood of a true match.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get Social Analyzer installed on your system
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Run your first profile search in minutes
+  </Card>
+</CardGroup>

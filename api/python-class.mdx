@@ -1,0 +1,465 @@
+---
+title: 'Python Class Overview'
+description: 'SocialAnalyzer class architecture and initialization'
+icon: 'python'
+---
+
+## Overview
+
+The `SocialAnalyzer` class is the core Python API for Social Analyzer. It provides programmatic access to all username search and analysis functionality.
+
+---
+
+## Installation
+
+```bash
+pip install social-analyzer
+```
+
+---
+
+## Class Import
+
+```python
+from social_analyzer import SocialAnalyzer
+```
+
+---
+
+## Class Initialization
+
+### Constructor
+
+```python
+class SocialAnalyzer(silent=False)
+```
+
+<ParamField path="silent" type="boolean" default="false">
+  Suppress all console output when `True`. Useful for library integration and background tasks.
+</ParamField>
+
+### Basic Initialization
+
+```python
+# Default initialization
+sa = SocialAnalyzer()
+
+# Silent mode (no console output)
+sa = SocialAnalyzer(silent=True)
+```
+
+---
+
+## Instance Attributes
+
+After initialization, the class has the following attributes:
+
+### Core Attributes
+
+<ResponseField name="websites_entries" type="list">
+  List of all available website definitions loaded from `sites.json`. Each entry contains URL patterns, detection rules, and metadata.
+  
+  ```python
+  sa.websites_entries
+  # [{'url': 'https://youtube.com/{username}', 'selected': 'true', ...}, ...]
+  ```
+</ResponseField>
+
+<ResponseField name="shared_detections" type="list">
+  Shared detection patterns used across multiple websites
+  
+  ```python
+  sa.shared_detections
+  # [{'pattern': '...', 'type': '...', ...}, ...]
+  ```
+</ResponseField>
+
+<ResponseField name="generic_detection" type="list">
+  Generic detection rules applied when site-specific rules aren't available
+  
+  ```python
+  sa.generic_detection
+  # [{'pattern': '...', 'confidence': '...', ...}, ...]
+  ```
+</ResponseField>
+
+### Configuration Attributes
+
+<ResponseField name="silent" type="boolean" default="false">
+  Whether to suppress console output
+  
+  ```python
+  sa.silent = True  # Enable silent mode
+  ```
+</ResponseField>
+
+<ResponseField name="workers" type="integer" default="15">
+  Number of concurrent worker threads for parallel website checking
+  
+  ```python
+  sa.workers = 30  # Increase parallelism
+  ```
+</ResponseField>
+
+<ResponseField name="timeout" type="integer/None" default="None">
+  Delay in seconds between requests. `None` means random delay (0.01-0.99s)
+  
+  ```python
+  sa.timeout = 2  # 2 second delay between requests
+  ```
+</ResponseField>
+
+<ResponseField name="waf" type="boolean" default="true">
+  Web Application Firewall detection/bypass mode
+  
+  ```python
+  sa.waf = False  # Disable WAF handling
+  ```
+</ResponseField>
+
+<ResponseField name="headers" type="dict">
+  HTTP headers sent with each request
+  
+  ```python
+  sa.headers = {
+      "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:86.0) Gecko/20100101 Firefox/86.0"
+  }
+  ```
+</ResponseField>
+
+### Logging Attributes
+
+<ResponseField name="log" type="Logger">
+  Python logging instance for the class
+  
+  ```python
+  sa.log.info("Custom log message")
+  ```
+</ResponseField>
+
+<ResponseField name="logs_dir" type="string" default="''">
+  Directory for log files (when logging is enabled)
+  
+  ```python
+  sa.logs_dir = "/path/to/logs"
+  ```
+</ResponseField>
+
+### Screenshots Attributes
+
+<ResponseField name="screenshots" type="boolean/None" default="None">
+  Whether to capture screenshots of detected profiles
+  
+  ```python
+  sa.screenshots = True
+  sa.screenshots_location = "./screenshots"
+  ```
+</ResponseField>
+
+<ResponseField name="screenshots_location" type="string/None" default="None">
+  Directory to save captured screenshots
+</ResponseField>
+
+### Internal Attributes
+
+<ResponseField name="sites_path" type="string">
+  Path to `sites.json` data file
+  
+  ```python
+  # Automatically set to: <package>/data/sites.json
+  ```
+</ResponseField>
+
+<ResponseField name="languages_path" type="string">
+  Path to `languages.json` data file
+  
+  ```python
+  # Automatically set to: <package>/data/languages.json
+  ```
+</ResponseField>
+
+<ResponseField name="languages_json" type="dict/None">
+  Loaded language definitions
+</ResponseField>
+
+<ResponseField name="sites_dummy" type="dict/None">
+  Raw sites data loaded from JSON
+</ResponseField>
+
+### Regex Pattern Attributes
+
+<ResponseField name="strings_pages" type="Pattern">
+  Regex for detecting captcha and error pages
+  
+  ```python
+  # Matches: 'captcha-info', 'Please enable cookies', 'Completing the CAPTCHA'
+  ```
+</ResponseField>
+
+<ResponseField name="strings_titles" type="Pattern">
+  Regex for detecting error page titles
+  
+  ```python
+  # Matches: 'not found', 'blocked', 'attention required', 'cloudflare'
+  ```
+</ResponseField>
+
+<ResponseField name="strings_meta" type="Pattern">
+  Regex for filtering out meta tags
+  
+  ```python
+  # Matches: 'regionsAllowed', 'width', 'height', 'color', 'charset', etc.
+  ```
+</ResponseField>
+
+<ResponseField name="top_pattern" type="Pattern">
+  Regex for parsing top website numbers
+  
+  ```python
+  # Matches: 'top10', 'top50', 'top100', etc.
+  ```
+</ResponseField>
+
+---
+
+## Usage Patterns
+
+### Basic Setup
+
+```python
+from social_analyzer import SocialAnalyzer
+
+# Create instance
+sa = SocialAnalyzer()
+
+# Run analysis
+results = sa.run_as_object(
+    username="johndoe",
+    websites="all"
+)
+
+print(results)
+```
+
+### Silent Mode for Libraries
+
+```python
+# No console output, perfect for integration
+sa = SocialAnalyzer(silent=True)
+
+results = sa.run_as_object(
+    username="johndoe",
+    output="json",
+    silent=True
+)
+```
+
+### Custom Configuration
+
+```python
+sa = SocialAnalyzer(silent=False)
+
+# Customize settings
+sa.workers = 25  # More concurrent requests
+sa.timeout = 1   # 1 second delay between requests
+sa.headers = {
+    "User-Agent": "CustomBot/1.0",
+    "Accept-Language": "en-US"
+}
+
+results = sa.run_as_object(username="johndoe")
+```
+
+### With Screenshots
+
+```python
+import os
+
+sa = SocialAnalyzer()
+sa.screenshots = True
+sa.screenshots_location = "./screenshots"
+
+# Create screenshots directory
+os.makedirs(sa.screenshots_location, exist_ok=True)
+
+results = sa.run_as_object(
+    username="johndoe",
+    logs=True,  # Required for screenshots
+    screenshots=True
+)
+```
+
+### List All Websites
+
+```python
+sa = SocialAnalyzer()
+
+# Initialize detection data
+sa.init_logic()
+
+# List all available websites
+sa.list_all_websites()
+```
+
+---
+
+## Method Categories
+
+The `SocialAnalyzer` class provides several categories of methods:
+
+### Execution Methods
+
+- `run_as_object()` - Main method for programmatic usage
+- `run_as_cli()` - Parse command-line arguments and execute
+- `check_user_cli()` - Core CLI logic execution
+
+### Search Methods
+
+- `find_username_normal()` - Main username search using ThreadPoolExecutor
+- `fetch_url()` - Check individual website for username
+
+### Initialization Methods
+
+- `init_logic()` - Load detection data and initialize
+- `init_detections()` - Initialize detection rules
+- `load_file()` - Load JSON data files
+
+### Utility Methods
+
+- `list_all_websites()` - Display all available websites
+- `get_website()` - Extract domain from URL
+- `search_and_change()` - Update website entry
+- `top_websites()` - Select top N websites
+- `delete_keys()` - Remove specified keys from object
+- `clean_up_item()` - Filter profile fields
+- `get_language_by_guessing()` - Detect language from text
+- `get_language_by_parsing()` - Detect language from HTML
+- `check_errors()` - Error checking decorator
+
+### Logging Methods
+
+- `setup_logger()` - Configure logging
+
+See [Python Methods](/api/python-methods) for detailed documentation of each method.
+
+---
+
+## Advanced Configuration
+
+### Custom Detection Rules
+
+```python
+sa = SocialAnalyzer()
+sa.init_logic()
+
+# Modify detection rules
+for site in sa.websites_entries:
+    if 'youtube' in site['url']:
+        site['selected'] = 'true'
+    else:
+        site['selected'] = 'false'
+
+# Now only YouTube will be checked
+results = sa.find_username_normal({
+    "body": {
+        "uuid": "custom-task-id",
+        "string": "johndoe",
+        "options": "FindUserProfilesFast"
+    }
+})
+```
+
+### Error Handling
+
+```python
+try:
+    sa = SocialAnalyzer(silent=True)
+    results = sa.run_as_object(
+        username="johndoe",
+        websites="all",
+        output="json"
+    )
+    
+    if 'detected' in results:
+        print(f"Found {len(results['detected'])} profiles")
+    
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+---
+
+## Thread Safety
+
+<Warning>
+  The `SocialAnalyzer` class uses `ThreadPoolExecutor` internally but is not guaranteed to be thread-safe for external concurrent access. Create separate instances for each thread if needed.
+</Warning>
+
+```python
+import threading
+
+def search_user(username):
+    sa = SocialAnalyzer(silent=True)
+    return sa.run_as_object(username=username)
+
+# Create separate instances per thread
+thread1 = threading.Thread(target=search_user, args=("user1",))
+thread2 = threading.Thread(target=search_user, args=("user2",))
+
+thread1.start()
+thread2.start()
+```
+
+---
+
+## Performance Considerations
+
+### Worker Count
+
+The default worker count is 15. Adjust based on your system and network:
+
+```python
+# Conservative (slower, but stable)
+sa.workers = 10
+
+# Aggressive (faster, but may trigger rate limits)
+sa.workers = 50
+
+# Recommended for most use cases
+sa.workers = 25
+```
+
+### Timeout Settings
+
+```python
+# Random delay (default, most polite)
+sa.timeout = None
+
+# Fixed delay (predictable timing)
+sa.timeout = 1  # 1 second between requests
+
+# No delay (fastest, may trigger blocks)
+sa.timeout = 0
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Python Methods" icon="code" href="/api/python-methods">
+    Detailed documentation of all class methods
+  </Card>
+  
+  <Card title="CLI Reference" icon="terminal" href="/api/cli-reference">
+    Command-line interface documentation
+  </Card>
+  
+  <Card title="Output Formats" icon="file-export" href="/api/output-formats">
+    Understanding result structures
+  </Card>
+  
+  <Card title="Web Endpoints" icon="globe" href="/api/web-endpoints">
+    Express web API reference
+  </Card>
+</CardGroup>

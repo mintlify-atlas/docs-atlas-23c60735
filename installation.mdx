@@ -1,0 +1,272 @@
+---
+title: Installation
+description: Install Social Analyzer using Node.js, Python, or Docker
+---
+
+# Installation
+
+Social Analyzer can be installed and run in multiple ways. Choose the method that best fits your environment and workflow.
+
+## Prerequisites
+
+Before installing Social Analyzer, ensure you have one of the following:
+
+- **Node.js** (version 13 or higher) and npm
+- **Python 3** and pip3
+- **Docker** and docker-compose (optional)
+
+<Note>
+For screenshot functionality, you'll need the latest version of Chrome or Firefox ESR installed on your system.
+</Note>
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="Node.js Web App">
+    ### Node.js Web App (Recommended)
+
+    The Web App provides the most feature-rich interface with visual analysis tools.
+
+    <Steps>
+      <Step title="Install system dependencies">
+        Install required system packages:
+
+        ```bash
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+        sudo add-apt-repository ppa:mozillateam/ppa -y
+        sudo apt-get install -y firefox-esr tesseract-ocr git nodejs npm
+        ```
+
+        <Note>
+        Depending on your Linux distribution, the first two lines may not be needed.
+        </Note>
+      </Step>
+
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/qeeqbox/social-analyzer.git
+        cd social-analyzer
+        ```
+      </Step>
+
+      <Step title="Install Node dependencies">
+        ```bash
+        npm update
+        npm install
+        ```
+      </Step>
+
+      <Step title="Start the Web App">
+        ```bash
+        npm start
+        ```
+
+        Access the Web App at: `http://0.0.0.0:9005/app.html`
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Node.js CLI">
+    ### Node.js CLI
+
+    Use the Node.js CLI for command-line automation and scripting.
+
+    <Steps>
+      <Step title="Install system dependencies">
+        ```bash
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+        sudo add-apt-repository ppa:mozillateam/ppa -y
+        sudo apt-get install -y firefox-esr tesseract-ocr git nodejs npm
+        ```
+      </Step>
+
+      <Step title="Clone and install">
+        ```bash
+        git clone https://github.com/qeeqbox/social-analyzer.git
+        cd social-analyzer
+        npm install
+        ```
+      </Step>
+
+      <Step title="Run CLI commands">
+        Test the installation:
+
+        ```bash
+        nodejs app.js --username "johndoe"
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Python Package">
+    ### Python Package
+
+    Install Social Analyzer as a Python package via pip.
+
+    <Steps>
+      <Step title="Install Python and pip">
+        ```bash
+        sudo apt-get update
+        sudo apt-get install python3 python3-pip
+        ```
+      </Step>
+
+      <Step title="Install social-analyzer">
+        ```bash
+        pip3 install social-analyzer
+        ```
+      </Step>
+
+      <Step title="Verify installation">
+        ```bash
+        python3 -m social-analyzer --username "johndoe"
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Python Script">
+    ### Python Script (From Source)
+
+    Run Social Analyzer directly from the Python source code.
+
+    <Steps>
+      <Step title="Install system dependencies">
+        ```bash
+        sudo apt-get update
+        sudo apt-get install git python3 python3-pip
+        ```
+      </Step>
+
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/qeeqbox/social-analyzer
+        cd social-analyzer
+        ```
+      </Step>
+
+      <Step title="Install Python dependencies">
+        ```bash
+        pip3 install -r requirements.txt
+        ```
+      </Step>
+
+      <Step title="Run the script">
+        ```bash
+        python3 app.py --username "janedoe"
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Docker Installation
+
+<Warning>
+Docker installation provides grid option for faster parallel checking. Refer to the [official wiki](https://github.com/qeeqbox/social-analyzer/wiki/install) for Docker-specific instructions.
+</Warning>
+
+## Platform-Specific Notes
+
+### Linux
+The installation commands above are tested on Ubuntu/Debian-based distributions. For other distributions, adjust package manager commands accordingly.
+
+### Windows & macOS
+For Windows, macOS, and other platforms including Raspberry Pi, check the [installation wiki](https://github.com/qeeqbox/social-analyzer/wiki/install) for platform-specific instructions.
+
+## Python API Import
+
+If you want to use Social Analyzer programmatically in your Python projects:
+
+```python
+from importlib import import_module
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+results = SocialAnalyzer.run_as_object(username="johndoe", silent=True)
+print(results)
+```
+
+### Advanced Python Usage
+
+```python
+from importlib import import_module
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+results = SocialAnalyzer.run_as_object(
+    username="johndoe,janedoe",
+    silent=True,
+    output="json",
+    filter="good",
+    metadata=False,
+    timeout=10,
+    profiles="detected"
+)
+print(results)
+```
+
+## Verifying Installation
+
+Test your installation with a simple query:
+
+<CodeGroup>
+```bash Node.js
+nodejs app.js --username "test" --websites "youtube"
+```
+
+```bash Python
+python3 -m social-analyzer --username "test" --websites "youtube"
+```
+</CodeGroup>
+
+If the installation is successful, you should see detection results for the specified username.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Node.js version errors">
+    Social Analyzer requires Node.js version 13 or higher. Check your version:
+    
+    ```bash
+    node --version
+    ```
+    
+    If needed, update Node.js using nvm or your package manager.
+  </Accordion>
+
+  <Accordion title="Module not found errors">
+    Ensure all dependencies are installed:
+    
+    ```bash
+    npm install
+    # or
+    pip3 install -r requirements.txt
+    ```
+  </Accordion>
+
+  <Accordion title="Screenshot functionality not working">
+    Screenshot features require Chrome or Firefox ESR. Install the browser:
+    
+    ```bash
+    sudo apt-get install firefox-esr
+    # or install Chrome from the official website
+    ```
+  </Accordion>
+
+  <Accordion title="Permission errors">
+    If you encounter permission errors when installing globally, use:
+    
+    ```bash
+    sudo npm install
+    # or for Python
+    pip3 install --user social-analyzer
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Quick Start" icon="rocket" href="/quickstart">
+  Learn how to run your first profile search with Social Analyzer
+</Card>

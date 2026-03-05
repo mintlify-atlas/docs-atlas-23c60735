@@ -1,0 +1,447 @@
+---
+title: String Analysis
+description: Advanced name analysis, permutations, and string decomposition in Social Analyzer
+---
+
+Social Analyzer includes sophisticated string analysis capabilities to decompose usernames into their constituent parts, identify patterns, and generate variations for comprehensive profile searches.
+
+## Overview
+
+The string analysis module (`string-analysis.js`) performs multiple operations:
+
+- Name extraction and identification
+- Prefix and suffix detection
+- Number and symbol extraction
+- Word permutations and combinations
+- Common word identification by language
+- Age estimation from patterns
+- Leetspeak conversion
+
+## Name Analysis
+
+The analyzer uses dictionaries of male and female names to identify name components within usernames.
+
+### Name Extraction
+
+From `string-analysis.js:91-108`, the analyzer searches for known names:
+
+```javascript
+// Search for male names
+helper.parsed_json.m_names.forEach(function (item, index) {
+  if (string_to_check.indexOf(item) >= 0 && !all_words.name.includes(item)) {
+    all_words.name.push(item)
+    const temp = remove_word(string_to_check, item)
+    if (temp !== null && temp !== '' && temp.length > 1) {
+      all_words.unknown.push(temp)
+    }
+  }
+})
+
+// Search for female names
+helper.parsed_json.f_names.forEach(function (item, index) {
+  if (string_to_check.indexOf(item) >= 0 && !all_words.name.includes(item)) {
+    all_words.name.push(item)
+    const temp = remove_word(string_to_check, item)
+    if (temp !== null && temp !== '' && temp.length > 1) {
+      all_words.unknown.push(temp)
+    }
+  }
+})
+```
+
+### Example
+
+```javascript
+// Input: "johndoe123"
+// Detected:
+// - name: ["john"]
+// - unknown: ["doe123", "doe"]
+// - number: ["123"]
+```
+
+## Prefix Detection
+
+Identifies common username prefixes like "the", "real", "official", etc.
+
+From `string-analysis.js:82-90`:
+
+```javascript
+helper.parsed_json.prefix.forEach(function (item, index) {
+  if (string_to_check.indexOf(item) === 0 && !all_words.prefix.includes(item)) {
+    all_words.prefix.push(item)
+    const temp = remove_word(string_to_check, item)
+    if (temp !== null && temp !== '' && temp.length > 1) {
+      all_words.unknown.push(temp)
+    }
+  }
+})
+```
+
+<Note>
+Prefix detection only matches at the start of the string (position 0) to avoid false positives.
+</Note>
+
+## Symbol and Number Extraction
+
+### Symbol Detection
+
+From `string-analysis.js:172-180`, extracts special characters:
+
+```javascript
+async function find_symbols (req, all_words) {
+  try {
+    req.body.string.match(/[ \[\]:"\\|,.<>\/?~`!@#$%^&*()_+\-={};']/gi)
+      .forEach((item) => {
+        if (item !== ' ' && !all_words.symbol.includes(item)) {
+          all_words.symbol.push(item)
+        }
+      })
+  } catch (err) {}
+}
+```
+
+### Number Extraction
+
+From `string-analysis.js:182-190`, identifies numeric patterns:
+
+```javascript
+async function find_numbers (req, all_words) {
+  try {
+    req.body.string.match(/(\d+)/g).forEach((item) => {
+      if (!all_words.number.includes(item)) {
+        all_words.number.push(item)
+      }
+    })
+  } catch (err) {}
+}
+```
+
+### Example
+
+```javascript
+// Input: "john_doe@2024!"
+// Detected:
+// - symbol: ["_", "@", "!"]
+// - number: ["2024"]
+```
+
+## String Splitting Techniques
+
+### Split by Comma
+
+From `string-analysis.js:142-150`, handles comma-separated searches:
+
+```javascript
+async function split_comma (req, all_words) {
+  try {
+    req.body.string.split(',').forEach((item) => {
+      if (item.length > 1 && !all_words.unknown.includes(item)) {
+        all_words.unknown.push(item.toLowerCase())
+      }
+    })
+  } catch (err) {}
+}
+```
+
+### Split by Uppercase
+
+From `string-analysis.js:152-160`, detects camelCase patterns:
+
+```javascript
+async function split_upper_case (req, all_words) {
+  try {
+    req.body.string.match(/[A-Z][a-z]+/g).forEach((item) => {
+      if (item.length > 1 && !all_words.unknown.includes(item)) {
+        all_words.unknown.push(item.toLowerCase())
+      }
+    })
+  } catch (err) {}
+}
+```
+
+### Split by Alphabet
+
+From `string-analysis.js:162-170`, extracts all alphabetic sequences:
+
+```javascript
+async function split_alphabet_case (req, all_words) {
+  try {
+    req.body.string.match(/[A-Za-z]+/g).forEach((item) => {
+      if (item.length > 1 && !all_words.unknown.includes(item)) {
+        all_words.unknown.push(item.toLowerCase())
+      }
+    })
+  } catch (err) {}
+}
+```
+
+## Leetspeak Conversion
+
+Converts common number-to-letter substitutions used in usernames.
+
+From `string-analysis.js:192-216`:
+
+```javascript
+async function convert_numbers (req) {
+  const numbers_to_letters = {
+    4: 'a',
+    8: 'b',
+    3: 'e',
+    1: 'l',
+    0: 'o',
+    5: 's',
+    7: 't',
+    2: 'z'
+  }
+
+  let temp_value = ''
+  for (let i = 0; i < req.body.string.length; i++) {
+    const _temp = numbers_to_letters[req.body.string.charAt(i)]
+    if (_temp !== undefined) {
+      temp_value += numbers_to_letters[req.body.string.charAt(i)]
+    } else {
+      temp_value += req.body.string.charAt(i)
+    }
+  }
+  req.body.string = temp_value
+}
+```
+
+### Example
+
+```javascript
+// Input: "h4ck3r123"
+// Converted: "hacker123"
+// Mapping:
+// - 4 -> a
+// - 3 -> e
+```
+
+<Tip>
+Leetspeak conversion happens before other analysis steps to maximize name detection accuracy.
+</Tip>
+
+## Word Permutations
+
+The analyzer uses WordsNinja to split concatenated words and identify meaningful components.
+
+From `string-analysis.js:218-223`:
+
+```javascript
+async function get_maybe_words (req, all_words) {
+  await WordsNinja.loadDictionary()
+  all_words.maybe = await WordsNinja.splitSentence(req.body.string)
+    .filter(function (elem, index, self) {
+      return index === self.indexOf(elem)
+    })
+    .filter(word => word.length > 1)
+}
+```
+
+### Example
+
+```javascript
+// Input: "johnsmith"
+// WordsNinja splits to: ["john", "smith"]
+
+// Input: "therockingjohn"
+// WordsNinja splits to: ["the", "rocking", "john"]
+```
+
+## Language Detection
+
+Identifies the language origin of words found in usernames.
+
+From `string-analysis.js:30-52`:
+
+```javascript
+async function most_common (all_words, temp_words) {
+  const temp_list = []
+  Object.keys(all_words).forEach(function (key) {
+    all_words[key].forEach(function (item) {
+      if (!temp_list.includes(item) && item.length > 1) {
+        temp_list.push(item)
+        const temp = findWord(item)
+        if (Object.keys(temp).length !== 0) {
+          const languages = Object.keys(temp).map(function (key) {
+            return [key, temp[key]]
+          })
+          languages.sort(function (first, second) {
+            return second[1] - first[1]
+          }).reverse()
+          temp_words.push({
+            word: item,
+            languages: languages.map(e => e[0]).join(', ')
+          })
+        }
+      }
+    })
+  })
+}
+```
+
+### Example Output
+
+```json
+[
+  {
+    "word": "john",
+    "languages": "en, de, nl"
+  },
+  {
+    "word": "pierre",
+    "languages": "fr, en"
+  }
+]
+```
+
+## Age Estimation
+
+Attempts to estimate age from numeric patterns in usernames.
+
+From `string-analysis.js:225-270`:
+
+```javascript
+async function guess_age_from_string(req) {
+  let results = []
+  let age_4_numbers = /\d{4}|\d{2}/g
+  let current_year = new Date().getFullYear()
+  
+  while ((match = age_4_numbers.exec(req.body.string)) != null) {
+    let temp_dict = {"found":"","year":"","age":""}
+    let found = parseInt(match[0])
+    
+    // Check if 2-digit year between 50-99 (1950-1999)
+    if (found >= 50 && found <= 99){
+      year = found + 1900
+      age = current_year - year
+      if (age <= 75){
+        temp_dict.year = year.toString()
+        temp_dict.age = age.toString()
+      }
+    }
+    
+    // Check if direct age between 14-49
+    if (found >= 14 && found <= 49){
+      year = current_year - found
+      age = found
+      if (age <= 75){
+        temp_dict.year = year.toString()
+        temp_dict.age = age.toString()
+      }
+    }
+    
+    // Check if 4-digit birth year
+    if (found >= 1950){
+      year = found
+      age = current_year - year
+      if (age <= 75){
+        temp_dict.year = year.toString()
+        temp_dict.age = age.toString()
+      }
+    }
+    
+    results.push(temp_dict)
+  }
+  
+  return results
+}
+```
+
+### Example
+
+```javascript
+// Input: "johndoe1985"
+// Age estimation:
+// {
+//   "found": "1985",
+//   "year": "1985",
+//   "age": "39"
+// }
+
+// Input: "user_25_smith"
+// Age estimation:
+// {
+//   "found": "25",
+//   "year": "1999",
+//   "age": "25"
+// }
+```
+
+<Warning>
+Age estimation is limited and should be used as a hint rather than definitive information. Many usernames contain numbers unrelated to age.
+</Warning>
+
+## Analysis Workflow
+
+The complete string analysis follows this sequence:
+
+1. **Convert Numbers**: Apply leetspeak conversion
+2. **Find Symbols**: Extract special characters
+3. **Find Numbers**: Extract numeric sequences
+4. **Split Patterns**: Apply comma, uppercase, and alphabet splitting
+5. **Analyze String**: Match against name and prefix dictionaries
+6. **Word Ninja**: Split concatenated words
+7. **Language Detection**: Identify word origins
+8. **Age Estimation**: Extract possible age information
+
+## Multi-Profile Analysis
+
+Social Analyzer supports comma-separated usernames for correlation analysis:
+
+```bash
+node app.js --username "johndoe,janedoe,jdoe" --metadata
+```
+
+This analyzes multiple related profiles simultaneously and can identify patterns across accounts.
+
+## Practical Examples
+
+### Example 1: Complex Username
+
+```javascript
+// Input: "TheRealJohn123_Official"
+
+// Analysis results:
+// prefix: ["the", "real", "official"]
+// name: ["john"]
+// number: ["123"]
+// symbol: ["_"]
+// unknown: ["john123", "john"]
+```
+
+### Example 2: Leetspeak Username
+
+```javascript
+// Input: "h4x0r_j0hn"
+
+// After conversion: "haxor_john"
+// name: ["john"]
+// maybe: ["haxor", "john"]
+// symbol: ["_"]
+```
+
+### Example 3: Multi-word Username
+
+```javascript
+// Input: "johnsmithcoder"
+
+// Analysis results:
+// name: ["john"]
+// maybe: ["john", "smith", "coder"]
+// languages: 
+//   - john: en, de
+//   - smith: en
+//   - coder: en
+```
+
+## Integration with Detection
+
+String analysis results feed into the profile detection process by:
+
+- Generating username variations to search
+- Identifying related profiles through name matching
+- Providing context for detected profiles
+- Enabling correlation across multiple usernames
+
+The decomposed strings are used to build comprehensive search patterns that increase detection accuracy across different platforms.

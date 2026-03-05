@@ -1,0 +1,367 @@
+---
+title: "Usage Examples"
+description: "Real-world usage examples and common scenarios for Social Analyzer"
+icon: "code"
+---
+
+## Basic Username Search
+
+The simplest way to use Social Analyzer is to search for a single username across all supported platforms.
+
+### Command Line (Python)
+
+```bash
+python3 -m social-analyzer --username "johndoe"
+```
+
+This searches for "johndoe" across all 1000+ social media websites and returns detected profiles.
+
+### Command Line (Node.js)
+
+```bash
+nodejs app.js --username "johndoe"
+```
+
+### Python Script
+
+```python
+from importlib import import_module
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+results = SocialAnalyzer.run_as_object(username="johndoe", silent=True)
+print(results)
+```
+
+## Multi-Username Correlation
+
+Search for multiple usernames simultaneously to find correlations across profiles. This is useful for investigations involving multiple aliases.
+
+```bash
+python3 -m social-analyzer --username "johndoe,janedoe,john_doe123"
+```
+
+<Note>
+Separate multiple usernames with commas (no spaces). Social Analyzer will search for all usernames and help identify potential connections.
+</Note>
+
+### With Metadata Extraction
+
+```bash
+python3 -m social-analyzer --username "johndoe,janedoe" --metadata
+```
+
+This extracts additional metadata from detected profiles, including patterns and relationships.
+
+## Searching Specific Websites
+
+Instead of searching all platforms, you can target specific websites to speed up your search.
+
+### Single Website
+
+```bash
+python3 -m social-analyzer --username "johndoe" --websites "github"
+```
+
+### Multiple Websites
+
+```bash
+python3 -m social-analyzer --username "johndoe" --websites "github twitter instagram"
+```
+
+### By Category
+
+Search only adult content sites or music platforms:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --type "adult"
+```
+
+```bash
+python3 -m social-analyzer --username "johndoe" --type "music"
+```
+
+## Top Ranked Websites
+
+Search only the most popular websites based on Alexa rankings:
+
+```bash
+# Search top 50 websites
+python3 -m social-analyzer --username "johndoe" --top 50
+```
+
+```bash
+# Search top 100 websites
+python3 -m social-analyzer --username "johndoe" --top 100
+```
+
+<Tip>
+Using `--top` significantly reduces search time while focusing on high-traffic platforms where profiles are most likely to exist.
+</Tip>
+
+## Website Selection by Country
+
+Target websites popular in specific countries:
+
+```bash
+# US-based websites
+python3 -m social-analyzer --username "johndoe" --countries "us"
+```
+
+```bash
+# Multiple countries
+python3 -m social-analyzer --username "johndoe" --countries "us br ru"
+```
+
+## Metadata Extraction
+
+Extract detailed metadata and patterns from detected profiles:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --metadata --extract
+```
+
+This enables:
+- Pattern recognition across profiles
+- Metadata visualization
+- Force-directed graphs showing relationships
+- Common words and phrases analysis
+
+## Filtering Results
+
+### By Detection Quality
+
+Filter results based on detection confidence:
+
+```bash
+# Only high-confidence matches
+python3 -m social-analyzer --username "johndoe" --filter "good"
+```
+
+```bash
+# Include uncertain matches
+python3 -m social-analyzer --username "johndoe" --filter "good,maybe"
+```
+
+```bash
+# All results including low confidence
+python3 -m social-analyzer --username "johndoe" --filter "all"
+```
+
+### By Profile Status
+
+```bash
+# Only detected profiles
+python3 -m social-analyzer --username "johndoe" --profiles "detected"
+```
+
+```bash
+# Include failed searches
+python3 -m social-analyzer --username "johndoe" --profiles "detected,failed"
+```
+
+## Screenshots and Logging
+
+Capture screenshots of detected profiles and save detailed logs:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --screenshots --logs
+```
+
+<Warning>
+Screenshots require Chrome/Chromium to be installed on your system. Make sure you have the latest version.
+</Warning>
+
+### Custom Log Directory
+
+```bash
+python3 -m social-analyzer --username "johndoe" --logs --logs_dir "/path/to/logs"
+```
+
+## Output Formats
+
+### JSON Output
+
+Export results as JSON for programmatic processing:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --output "json" > results.json
+```
+
+### Pretty Output
+
+Human-readable formatted output:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --output "pretty"
+```
+
+### Selecting Output Fields
+
+```bash
+# Only show links
+python3 -m social-analyzer --username "johndoe" --options "link"
+```
+
+```bash
+# Show links and confidence ratings
+python3 -m social-analyzer --username "johndoe" --options "link,rate"
+```
+
+## Docker Usage
+
+### Basic Search
+
+```bash
+docker run -p 9005:9005 qeeqbox/social-analyzer
+```
+
+Then open `http://localhost:9005/app.html` in your browser.
+
+### With Volume Mounting
+
+Mount a directory to save results:
+
+```bash
+docker run -p 9005:9005 -v $(pwd)/results:/app/logs qeeqbox/social-analyzer
+```
+
+### Docker Compose Grid Mode
+
+For faster searches using multiple containers:
+
+```bash
+docker-compose up
+```
+
+<Tip>
+Grid mode distributes searches across multiple containers for parallel processing, significantly reducing search time.
+</Tip>
+
+## Advanced Python Integration
+
+### Custom Configuration
+
+```python
+from importlib import import_module
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+results = SocialAnalyzer.run_as_object(
+    username="johndoe,janedoe",
+    silent=True,
+    output="json",
+    filter="good",
+    metadata=True,
+    timeout=10,
+    profiles="detected"
+)
+
+# Process results
+for profile in results.get('detected', []):
+    print(f"Found: {profile['link']} (Confidence: {profile['rate']})")
+```
+
+### Batch Processing
+
+```python
+from importlib import import_module
+import json
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+usernames = ["johndoe", "janedoe", "alice123"]
+all_results = {}
+
+for username in usernames:
+    print(f"Searching for {username}...")
+    results = SocialAnalyzer.run_as_object(
+        username=username,
+        silent=True,
+        filter="good",
+        timeout=15
+    )
+    all_results[username] = results
+
+# Save combined results
+with open('batch_results.json', 'w') as f:
+    json.dump(all_results, f, indent=2)
+```
+
+## Investigation Workflow Example
+
+A complete investigation workflow combining multiple features:
+
+```bash
+# Step 1: Quick search on top websites
+python3 -m social-analyzer --username "suspect123" --top 100 --filter "good" > initial_search.json
+
+# Step 2: Deep search with metadata on detected platforms
+python3 -m social-analyzer --username "suspect123" --metadata --extract --screenshots --logs
+
+# Step 3: Correlate with known aliases
+python3 -m social-analyzer --username "suspect123,suspect_456,john_suspect" --metadata --output "json" > correlation.json
+
+# Step 4: Search specific platforms mentioned in initial results
+python3 -m social-analyzer --username "suspect123" --websites "twitter facebook instagram" --screenshots
+```
+
+## Special Detections
+
+Social Analyzer has enhanced detection for certain platforms:
+
+### Facebook
+
+Search by phone number, name, or profile name:
+
+```bash
+python3 -m social-analyzer --username "john.doe.123" --websites "facebook"
+```
+
+### Gmail
+
+Detect Gmail accounts:
+
+```bash
+python3 -m social-analyzer --username "example@gmail.com" --websites "gmail"
+```
+
+### Google
+
+Search general Google accounts:
+
+```bash
+python3 -m social-analyzer --username "example@example.com" --websites "google"
+```
+
+## Performance Optimization
+
+### Adjusting Worker Threads
+
+By default, Social Analyzer uses 15 workers. You can modify this in the code:
+
+```python
+from importlib import import_module
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+SocialAnalyzer.workers = 25  # Increase for faster searches
+
+results = SocialAnalyzer.run_as_object(username="johndoe", silent=True)
+```
+
+### Custom Timeout
+
+```bash
+python3 -m social-analyzer --username "johndoe" --timeout 5
+```
+
+Lower timeouts speed up searches but may miss slow-loading sites.
+
+## Listing Available Websites
+
+View all supported platforms:
+
+```bash
+python3 -m social-analyzer --list
+```
+
+This displays all 1000+ websites in the detection database.

@@ -1,0 +1,574 @@
+---
+title: "Integration Guide"
+description: "Integrating Social Analyzer with other OSINT tools and workflows"
+icon: "puzzle-piece"
+---
+
+## Overview
+
+Social Analyzer can be integrated into larger OSINT workflows, automated pipelines, and combined with other investigation tools. This guide covers various integration patterns and examples.
+
+## Output Formats for Integration
+
+### JSON Output
+
+The most common format for tool integration is JSON:
+
+```bash
+python3 -m social-analyzer --username "johndoe" --output "json" > results.json
+```
+
+### Structured JSON Response
+
+The JSON output contains three main sections:
+
+```json
+{
+  "detected": [
+    {
+      "link": "https://github.com/johndoe",
+      "rate": "100%",
+      "status": "good",
+      "title": "John Doe - GitHub",
+      "language": "English"
+    }
+  ],
+  "unknown": [],
+  "failed": []
+}
+```
+
+## Python Integration
+
+### Using as a Module
+
+Import Social Analyzer directly in your Python scripts:
+
+```python
+from importlib import import_module
+import json
+
+class OSINTInvestigation:
+    def __init__(self):
+        self.analyzer = import_module("social-analyzer").SocialAnalyzer()
+    
+    def search_profiles(self, username):
+        results = self.analyzer.run_as_object(
+            username=username,
+            silent=True,
+            output="json",
+            filter="good",
+            metadata=True
+        )
+        return results
+    
+    def extract_links(self, results):
+        """Extract all profile URLs from results"""
+        links = []
+        if 'detected' in results:
+            links = [profile['link'] for profile in results['detected']]
+        return links
+    
+    def high_confidence_matches(self, results):
+        """Filter only 100% confidence matches"""
+        if 'detected' not in results:
+            return []
+        
+        return [
+            profile for profile in results['detected']
+            if profile['rate'] == '100%'
+        ]
+
+# Usage
+investigator = OSINTInvestigation()
+results = investigator.search_profiles("johndoe")
+links = investigator.extract_links(results)
+print(f"Found {len(links)} profiles")
+```
+
+### Automated Batch Processing
+
+```python
+from importlib import import_module
+import json
+import csv
+from datetime import datetime
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+def process_username_list(csv_file):
+    """Process a CSV file of usernames"""
+    results_all = []
+    
+    with open(csv_file, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            username = row['username']
+            case_id = row.get('case_id', 'unknown')
+            
+            print(f"Processing {username} (Case: {case_id})")
+            
+            results = SocialAnalyzer.run_as_object(
+                username=username,
+                silent=True,
+                filter="good",
+                timeout=10
+            )
+            
+            results_all.append({
+                'case_id': case_id,
+                'username': username,
+                'timestamp': datetime.now().isoformat(),
+                'results': results
+            })
+    
+    # Save combined results
+    output_file = f"osint_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    with open(output_file, 'w') as f:
+        json.dump(results_all, f, indent=2)
+    
+    return output_file
+
+# Usage
+output = process_username_list('suspects.csv')
+print(f"Results saved to {output}") 
+```
+
+## Shell Script Integration
+
+### Basic Wrapper Script
+
+```bash
+#!/bin/bash
+# osint_search.sh - Wrapper script for Social Analyzer
+
+USERNAME=$1
+OUTPUT_DIR="./osint_results"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "[*] Searching for: $USERNAME"
+
+# Run search and save results
+python3 -m social-analyzer \
+    --username "$USERNAME" \
+    --output "json" \
+    --filter "good" \
+    --metadata \
+    --silent \
+    > "$OUTPUT_DIR/${USERNAME}_${TIMESTAMP}.json"
+
+echo "[+] Results saved to $OUTPUT_DIR/${USERNAME}_${TIMESTAMP}.json"
+
+# Extract just the URLs
+jq -r '.detected[].link' "$OUTPUT_DIR/${USERNAME}_${TIMESTAMP}.json" \
+    > "$OUTPUT_DIR/${USERNAME}_${TIMESTAMP}_urls.txt"
+
+echo "[+] URLs saved to $OUTPUT_DIR/${USERNAME}_${TIMESTAMP}_urls.txt"
+```
+
+### Pipeline with Other Tools
+
+```bash
+#!/bin/bash
+# osint_pipeline.sh - Complete OSINT pipeline
+
+USERNAME=$1
+
+# Step 1: Social Analyzer
+echo "[1/4] Running Social Analyzer..."
+python3 -m social-analyzer --username "$USERNAME" --output "json" > temp_social.json
+
+# Step 2: Extract URLs
+echo "[2/4] Extracting URLs..."
+jq -r '.detected[].link' temp_social.json > urls.txt
+
+# Step 3: Archive URLs (using waybackpack or similar)
+echo "[3/4] Checking Wayback Machine..."
+while read url; do
+    echo "Archiving: $url"
+    waybackpack "$url" --to-date 2024 --from-date 2020
+done < urls.txt
+
+# Step 4: Screenshot URLs (using shot-scraper or similar)
+echo "[4/4] Taking screenshots..."
+mkdir -p screenshots
+while read url; do
+    filename=$(echo "$url" | sed 's/[^a-zA-Z0-9]/_/g')
+    shot-scraper "$url" -o "screenshots/${filename}.png"
+done < urls.txt
+
+echo "[+] Pipeline complete!"
+```
+
+## Integration with Maltego
+
+Create custom Maltego transforms using Social Analyzer:
+
+```python
+# maltego_transform.py
+from maltego_trx.entities import Person, URL
+from maltego_trx.transform import DiscoverableTransform
+from importlib import import_module
+
+class UsernameToProfiles(DiscoverableTransform):
+    """
+    Maltego transform to find social media profiles from username
+    """
+    
+    @classmethod
+    def create_entities(cls, request, response):
+        username = request.Value
+        
+        SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+        results = SocialAnalyzer.run_as_object(
+            username=username,
+            silent=True,
+            filter="good"
+        )
+        
+        if 'detected' in results:
+            for profile in results['detected']:
+                url_entity = response.addEntity(URL, profile['link'])
+                url_entity.addProperty('title', 'Title', value=profile['title'])
+                url_entity.addProperty('confidence', 'Confidence', value=profile['rate'])
+        
+        return response
+```
+
+## Integration with Spiderfoot
+
+Add Social Analyzer as a Spiderfoot module:
+
+```python
+# sfp_social_analyzer.py - Spiderfoot module
+from spiderfoot import SpiderFootEvent, SpiderFootPlugin
+from importlib import import_module
+
+class sfp_social_analyzer(SpiderFootPlugin):
+    meta = {
+        'name': "Social Analyzer",
+        'summary': "Find social media profiles using Social Analyzer",
+        'flags': ["tool"],
+        'useCases': ["Footprint", "Investigate", "Passive"],
+        'categories': ["Social Media"]
+    }
+    
+    opts = {
+        'confidence': 'good',
+        'timeout': 10
+    }
+    
+    def handleEvent(self, event):
+        if event.eventType != "USERNAME":
+            return
+        
+        username = event.data
+        
+        try:
+            SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+            results = SocialAnalyzer.run_as_object(
+                username=username,
+                silent=True,
+                filter=self.opts['confidence'],
+                timeout=self.opts['timeout']
+            )
+            
+            if 'detected' in results:
+                for profile in results['detected']:
+                    evt = SpiderFootEvent(
+                        "SOCIAL_MEDIA",
+                        profile['link'],
+                        self.__name__,
+                        event
+                    )
+                    self.notifyListeners(evt)
+        except Exception as e:
+            self.error(f"Error in social-analyzer: {str(e)}")
+```
+
+## REST API Wrapper
+
+Create a REST API for Social Analyzer:
+
+```python
+# api_server.py
+from flask import Flask, request, jsonify
+from importlib import import_module
+import json
+
+app = Flask(__name__)
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+@app.route('/api/search', methods=['POST'])
+def search_username():
+    data = request.get_json()
+    
+    username = data.get('username')
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    
+    filter_val = data.get('filter', 'good')
+    metadata = data.get('metadata', False)
+    timeout = data.get('timeout', 10)
+    
+    try:
+        results = SocialAnalyzer.run_as_object(
+            username=username,
+            silent=True,
+            filter=filter_val,
+            metadata=metadata,
+            timeout=timeout
+        )
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+Usage:
+```bash
+# Start server
+python api_server.py
+
+# Make requests
+curl -X POST http://localhost:5000/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"username": "johndoe", "filter": "good", "metadata": true}'
+```
+
+## Data Processing and Analysis
+
+### Export to CSV
+
+```python
+import json
+import csv
+from importlib import import_module
+
+def export_results_to_csv(username, output_file):
+    """Search and export results to CSV"""
+    SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+    results = SocialAnalyzer.run_as_object(
+        username=username,
+        silent=True,
+        filter="good"
+    )
+    
+    with open(output_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Username', 'Platform', 'URL', 'Confidence', 'Title'])
+        
+        if 'detected' in results:
+            for profile in results['detected']:
+                platform = profile['link'].split('/')[2]  # Extract domain
+                writer.writerow([
+                    username,
+                    platform,
+                    profile['link'],
+                    profile['rate'],
+                    profile.get('title', '')
+                ])
+    
+    print(f"Exported to {output_file}")
+
+export_results_to_csv('johndoe', 'profiles.csv')
+```
+
+### Database Storage
+
+```python
+import sqlite3
+from importlib import import_module
+from datetime import datetime
+
+class ProfileDatabase:
+    def __init__(self, db_file='profiles.db'):
+        self.conn = sqlite3.connect(db_file)
+        self.create_tables()
+        self.analyzer = import_module("social-analyzer").SocialAnalyzer()
+    
+    def create_tables(self):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                platform TEXT,
+                url TEXT,
+                confidence TEXT,
+                title TEXT,
+                searched_at TIMESTAMP
+            )
+        ''')
+        self.conn.commit()
+    
+    def search_and_store(self, username):
+        results = self.analyzer.run_as_object(
+            username=username,
+            silent=True,
+            filter="good"
+        )
+        
+        cursor = self.conn.cursor()
+        timestamp = datetime.now()
+        
+        if 'detected' in results:
+            for profile in results['detected']:
+                platform = profile['link'].split('/')[2]
+                cursor.execute('''
+                    INSERT INTO profiles (username, platform, url, confidence, title, searched_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    username,
+                    platform,
+                    profile['link'],
+                    profile['rate'],
+                    profile.get('title', ''),
+                    timestamp
+                ))
+        
+        self.conn.commit()
+        return len(results.get('detected', []))
+    
+    def get_all_profiles(self, username):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT * FROM profiles WHERE username = ? ORDER BY searched_at DESC',
+            (username,)
+        )
+        return cursor.fetchall()
+
+# Usage
+db = ProfileDatabase()
+count = db.search_and_store('johndoe')
+print(f"Stored {count} profiles")
+```
+
+## Integration with Monitoring Systems
+
+### Continuous Monitoring
+
+```python
+import schedule
+import time
+from importlib import import_module
+import json
+from datetime import datetime
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+
+def monitor_username(username, alert_threshold=5):
+    """Monitor username for new profiles"""
+    results = SocialAnalyzer.run_as_object(
+        username=username,
+        silent=True,
+        filter="good"
+    )
+    
+    detected_count = len(results.get('detected', []))
+    
+    # Save results with timestamp
+    filename = f"monitor_{username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    with open(filename, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    # Alert if new profiles found
+    if detected_count >= alert_threshold:
+        print(f"ALERT: {detected_count} profiles found for {username}")
+        send_alert(username, detected_count)
+    
+    return detected_count
+
+def send_alert(username, count):
+    """Send alert notification (implement your preferred method)"""
+    # Email, Slack, webhook, etc.
+    print(f"Sending alert: {count} profiles for {username}")
+
+# Schedule monitoring
+schedule.every(24).hours.do(monitor_username, username="suspect123")
+
+while True:
+    schedule.run_pending()
+    time.sleep(3600)
+```
+
+## Integration Best Practices
+
+<Note>
+**Key considerations when integrating Social Analyzer:**
+
+1. **Rate Limiting**: Implement delays between requests to avoid overwhelming target sites
+2. **Error Handling**: Expect and handle network errors, timeouts, and failed searches
+3. **Caching**: Cache results to avoid redundant searches
+4. **Logging**: Maintain audit logs of all searches for compliance
+5. **Privacy**: Store results securely and comply with data protection regulations
+</Note>
+
+### Rate Limiting Example
+
+```python
+import time
+from importlib import import_module
+
+def search_with_rate_limit(usernames, delay=60):
+    """Search multiple usernames with rate limiting"""
+    SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+    results_all = {}
+    
+    for i, username in enumerate(usernames):
+        print(f"Searching {i+1}/{len(usernames)}: {username}")
+        
+        results = SocialAnalyzer.run_as_object(
+            username=username,
+            silent=True,
+            filter="good"
+        )
+        results_all[username] = results
+        
+        # Wait before next search (except for last item)
+        if i < len(usernames) - 1:
+            print(f"Waiting {delay} seconds...")
+            time.sleep(delay)
+    
+    return results_all
+```
+
+## Webhook Integration
+
+Send results to external systems:
+
+```python
+import requests
+from importlib import import_module
+
+def search_and_notify(username, webhook_url):
+    """Search and send results to webhook"""
+    SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer()
+    results = SocialAnalyzer.run_as_object(
+        username=username,
+        silent=True,
+        filter="good"
+    )
+    
+    # Send to webhook
+    payload = {
+        'username': username,
+        'profile_count': len(results.get('detected', [])),
+        'results': results
+    }
+    
+    response = requests.post(webhook_url, json=payload)
+    return response.status_code == 200
+```
+
+<Tip>
+For high-volume integrations, consider using the Docker grid mode to distribute searches across multiple containers for better performance.
+</Tip>

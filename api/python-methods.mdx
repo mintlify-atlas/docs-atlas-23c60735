@@ -1,0 +1,867 @@
+---
+title: 'Python Methods'
+description: 'Complete reference for SocialAnalyzer class methods'
+icon: 'brackets-curly'
+---
+
+## Overview
+
+Complete documentation of all public methods in the `SocialAnalyzer` class.
+
+---
+
+## Execution Methods
+
+### run_as_object()
+
+Main method for programmatic API usage. Executes username analysis with full parameter control.
+
+```python
+run_as_object(
+    cli=False,
+    gui=False,
+    logs_dir='',
+    logs=False,
+    extract=False,
+    filter='good',
+    headers={},
+    list=False,
+    metadata=False,
+    method='all',
+    mode='fast',
+    options='',
+    output='pretty',
+    profiles='detected',
+    type='all',
+    ret=False,
+    silent=False,
+    timeout=0,
+    trim=False,
+    username='',
+    websites='all',
+    countries='all',
+    top='0',
+    screenshots=False,
+    simplify=False
+)
+```
+
+<ParamField path="username" type="string" default="" required>
+  Username to search for
+  
+  ```python
+  username="johndoe"
+  ```
+</ParamField>
+
+<ParamField path="websites" type="string" default="all">
+  Space-separated list of websites or "all"
+  
+  ```python
+  websites="youtube twitter reddit"
+  websites="all"
+  ```
+</ParamField>
+
+<ParamField path="mode" type="string" default="fast">
+  Analysis mode: `fast`, `slow`, or `special`
+</ParamField>
+
+<ParamField path="output" type="string" default="pretty">
+  Output format: `json` or `pretty`
+</ParamField>
+
+<ParamField path="method" type="string" default="all">
+  Search method: `find`, `get`, or `all`
+</ParamField>
+
+<ParamField path="filter" type="string" default="good">
+  Confidence filter: `good`, `maybe`, `bad`, comma-separated, or `all`
+</ParamField>
+
+<ParamField path="profiles" type="string" default="detected">
+  Profile status filter: `detected`, `unknown`, `failed`, comma-separated, or `all`
+</ParamField>
+
+<ParamField path="options" type="string" default="">
+  Fields to display: comma-separated list of `link`, `rate`, `title`, `text`
+</ParamField>
+
+<ParamField path="top" type="string" default="0">
+  Select top N websites by popularity (e.g., "50")
+</ParamField>
+
+<ParamField path="type" type="string" default="all">
+  Website category filter (e.g., "Music", "Adult")
+</ParamField>
+
+<ParamField path="countries" type="string" default="all">
+  Space-separated country codes (e.g., "us br ru")
+</ParamField>
+
+<ParamField path="extract" type="boolean" default="false">
+  Extract profiles, URLs, and patterns
+</ParamField>
+
+<ParamField path="metadata" type="boolean" default="false">
+  Extract metadata using QeeqBox OSINT
+</ParamField>
+
+<ParamField path="trim" type="boolean" default="false">
+  Trim long strings
+</ParamField>
+
+<ParamField path="logs" type="boolean" default="false">
+  Enable file logging
+</ParamField>
+
+<ParamField path="logs_dir" type="string" default="">
+  Custom directory for log files
+</ParamField>
+
+<ParamField path="screenshots" type="boolean" default="false">
+  Capture screenshots (requires `logs=True`)
+</ParamField>
+
+<ParamField path="simplify" type="boolean" default="false">
+  Output only 100% confidence profile links
+</ParamField>
+
+<ParamField path="silent" type="boolean" default="false">
+  Suppress console output
+</ParamField>
+
+<ParamField path="timeout" type="integer" default="0">
+  Delay between requests in seconds (0 = random)
+</ParamField>
+
+<ParamField path="headers" type="dict" default="{}">
+  Custom HTTP headers
+  
+  ```python
+  headers={"User-Agent": "Custom/1.0"}
+  ```
+</ParamField>
+
+<ParamField path="list" type="boolean" default="false">
+  List all websites and exit
+</ParamField>
+
+<ParamField path="cli" type="boolean" default="false">
+  CLI mode flag (deprecated)
+</ParamField>
+
+<ParamField path="gui" type="boolean" default="false">
+  GUI mode flag (not implemented)
+</ParamField>
+
+<ParamField path="ret" type="boolean" default="false">
+  Reserved parameter
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="dict">
+  Dictionary with detected, unknown, and failed profiles (structure depends on filters)
+  
+  ```python
+  {
+      "detected": [{"link": "...", "rate": "100%", ...}],
+      "unknown": [{"link": "..."}],
+      "failed": [{"link": "..."}]
+  }
+  ```
+</ResponseField>
+
+#### Example
+
+```python
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer()
+
+results = sa.run_as_object(
+    username="johndoe",
+    websites="youtube twitter reddit",
+    mode="fast",
+    output="json",
+    filter="good",
+    profiles="detected",
+    extract=True,
+    metadata=True,
+    silent=True
+)
+
+for profile in results.get('detected', []):
+    print(f"{profile['link']} - {profile['rate']}")
+```
+
+---
+
+### run_as_cli()
+
+Parse command-line arguments and execute analysis. Used internally by the CLI.
+
+```python
+run_as_cli()
+```
+
+#### Returns
+
+<ResponseField name="return" type="dict">
+  Analysis results dictionary
+</ResponseField>
+
+#### Example
+
+```python
+from social_analyzer import SocialAnalyzer
+import sys
+
+# Simulate CLI usage
+sys.argv = ['social-analyzer', '--username', 'johndoe', '--output', 'json']
+
+sa = SocialAnalyzer()
+results = sa.run_as_cli()
+print(results)
+```
+
+---
+
+### check_user_cli()
+
+Core CLI execution logic. Processes parsed arguments and performs username search.
+
+```python
+check_user_cli(argv)
+```
+
+<ParamField path="argv" type="Namespace" required>
+  Parsed argument namespace from argparse
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="dict">
+  Analysis results with detected, unknown, and failed profiles
+</ResponseField>
+
+#### Example
+
+```python
+from argparse import Namespace
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer()
+sa.init_logic()
+
+args = Namespace(
+    username="johndoe",
+    websites="youtube twitter",
+    mode="fast",
+    output="json",
+    method="all",
+    filter="good",
+    profiles="detected",
+    options="",
+    extract=False,
+    metadata=False,
+    trim=False,
+    countries="all",
+    type="all",
+    top="0",
+    logs=False,
+    screenshots=False,
+    simplify=False,
+    cli=False
+)
+
+results = sa.check_user_cli(args)
+print(results)
+```
+
+---
+
+## Search Methods
+
+### find_username_normal()
+
+Main username search logic using ThreadPoolExecutor for concurrent website checking.
+
+```python
+find_username_normal(req)
+```
+
+<ParamField path="req" type="dict" required>
+  Request object containing search parameters
+  
+  ```python
+  {
+      "body": {
+          "uuid": "unique-task-id",
+          "string": "username or comma-separated usernames",
+          "options": "FindUserProfilesFast,GetUserProfilesFast"
+      }
+  }
+  ```
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="list">
+  List of profile dictionaries with detection results
+  
+  ```python
+  [
+      {"link": "...", "method": "all", "good": "true", "rate": "100%", ...},
+      {"link": "...", "method": "find", "good": "true", ...},
+      {"link": "...", "method": "failed", ...}
+  ]
+  ```
+</ResponseField>
+
+#### Example
+
+```python
+from uuid import uuid4
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer(silent=True)
+sa.init_logic()
+
+# Select websites
+for site in sa.websites_entries:
+    if 'youtube' in site['url'] or 'twitter' in site['url']:
+        site['selected'] = 'true'
+    else:
+        site['selected'] = 'false'
+
+req = {
+    "body": {
+        "uuid": str(uuid4()),
+        "string": "johndoe",
+        "options": "FindUserProfilesFast,GetUserProfilesFast"
+    }
+}
+
+results = sa.find_username_normal(req)
+
+for profile in results:
+    if profile and profile.get('good') == 'true':
+        print(f"Found: {profile['link']}")
+```
+
+---
+
+### fetch_url()
+
+Check a single website for a username. Called by `find_username_normal()` for each website.
+
+```python
+fetch_url(site, username, options)
+```
+
+<ParamField path="site" type="dict" required>
+  Website entry from `websites_entries`
+</ParamField>
+
+<ParamField path="username" type="string" required>
+  Username to check
+</ParamField>
+
+<ParamField path="options" type="string" required>
+  Search options (e.g., "FindUserProfilesFast")
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="tuple">
+  Tuple of (success: bool, site_url: string, profile_data: dict)
+  
+  ```python
+  (True, "https://youtube.com/{username}", {"link": "...", "rate": "100%", ...})
+  ```
+</ResponseField>
+
+---
+
+## Initialization Methods
+
+### init_logic()
+
+Load detection data files and initialize website entries. Must be called before searching.
+
+```python
+init_logic()
+```
+
+#### Example
+
+```python
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer()
+sa.init_logic()  # Load sites.json and languages.json
+
+print(f"Loaded {len(sa.websites_entries)} websites")
+```
+
+---
+
+### init_detections()
+
+Initialize specific detection data from loaded sites.
+
+```python
+init_detections(detections)
+```
+
+<ParamField path="detections" type="string" required>
+  Detection type: `websites_entries`, `shared_detections`, or `generic_detection`
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="list">
+  List of detection entries
+</ResponseField>
+
+---
+
+### load_file()
+
+Load a JSON file from local path or download if missing.
+
+```python
+load_file(name, path_to_check, url_download)
+```
+
+<ParamField path="name" type="string" required>
+  Display name for the file
+</ParamField>
+
+<ParamField path="path_to_check" type="string" required>
+  Local file path
+</ParamField>
+
+<ParamField path="url_download" type="string" required>
+  Download URL if file doesn't exist
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="dict/None">
+  Loaded JSON data or None if failed
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+data = sa.load_file(
+    "custom_sites",
+    "./data/custom.json",
+    "https://example.com/custom.json"
+)
+
+if data:
+    print("Loaded custom sites")
+```
+
+---
+
+## Website Management Methods
+
+### list_all_websites()
+
+Print all available website domains to console.
+
+```python
+list_all_websites()
+```
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+sa.init_logic()
+sa.list_all_websites()
+# Output:
+# youtube.com
+# twitter.com
+# reddit.com
+# ...
+```
+
+---
+
+### get_website()
+
+Extract clean domain name from website URL.
+
+```python
+get_website(site)
+```
+
+<ParamField path="site" type="string" required>
+  Full website URL
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="string">
+  Cleaned domain name
+  
+  ```python
+  # Input: "https://www.youtube.com/{username}/videos"
+  # Output: "youtube.com"
+  ```
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+domain = sa.get_website("https://www.youtube.com/{username}")
+print(domain)  # "youtube.com"
+```
+
+---
+
+### search_and_change()
+
+Find and update a website entry in `websites_entries`.
+
+```python
+search_and_change(site, _dict)
+```
+
+<ParamField path="site" type="dict" required>
+  Website entry to find
+</ParamField>
+
+<ParamField path="_dict" type="dict" required>
+  Fields to update
+</ParamField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+sa.init_logic()
+
+# Mark YouTube as selected
+for site in sa.websites_entries:
+    if 'youtube' in site['url']:
+        sa.search_and_change(site, {"selected": "true"})
+        break
+```
+
+---
+
+### top_websites()
+
+Select top N websites by global rank.
+
+```python
+top_websites(top_number)
+```
+
+<ParamField path="top_number" type="string" required>
+  Number pattern (e.g., "top50", "top100")
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="boolean">
+  True if successful, False otherwise
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+sa.init_logic()
+
+if sa.top_websites("top50"):
+    print("Selected top 50 websites")
+    selected = [s for s in sa.websites_entries if s.get('selected') == 'true']
+    print(f"Total selected: {len(selected)}")
+```
+
+---
+
+## Utility Methods
+
+### delete_keys()
+
+Remove specific keys from a dictionary.
+
+```python
+delete_keys(in_object, keys)
+```
+
+<ParamField path="in_object" type="dict" required>
+  Dictionary to modify
+</ParamField>
+
+<ParamField path="keys" type="list" required>
+  List of keys to remove
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="dict">
+  Modified dictionary
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+profile = {
+    "link": "https://youtube.com/johndoe",
+    "rate": "100%",
+    "method": "all",
+    "good": "true"
+}
+
+clean = sa.delete_keys(profile, ["method", "good"])
+print(clean)  # {"link": "...", "rate": "100%"}
+```
+
+---
+
+### clean_up_item()
+
+Filter profile object to only specified fields (user-controlled).
+
+```python
+clean_up_item(in_object, keys_str)
+```
+
+<ParamField path="in_object" type="dict" required>
+  Profile dictionary
+</ParamField>
+
+<ParamField path="keys_str" type="string/list" required>
+  Comma-separated string or list of fields to keep
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="dict">
+  Filtered dictionary
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+profile = {
+    "link": "https://youtube.com/johndoe",
+    "rate": "100%",
+    "title": "John Doe - YouTube",
+    "text": "Long description..."
+}
+
+# Keep only link and rate
+filtered = sa.clean_up_item(profile, "link,rate")
+print(filtered)  # {"link": "...", "rate": "100%"}
+
+# Keep only link
+filtered = sa.clean_up_item(profile, ["link"])
+print(filtered)  # {"link": "..."}
+```
+
+---
+
+### get_language_by_guessing()
+
+Detect language from text content using langdetect.
+
+```python
+get_language_by_guessing(text)
+```
+
+<ParamField path="text" type="string" required>
+  Text to analyze (needs to be relatively long)
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="string">
+  Language name with "(Maybe)" suffix or "unavailable"
+  
+  ```python
+  "English (Maybe)"
+  "Spanish (Maybe)"
+  "unavailable"
+  ```
+</ResponseField>
+
+#### Example
+
+```python
+sa = SocialAnalyzer()
+sa.init_logic()
+
+text = "Hello, this is a sample text in English."
+lang = sa.get_language_by_guessing(text)
+print(lang)  # "English (Maybe)"
+```
+
+---
+
+### get_language_by_parsing()
+
+Detect language from HTML source code meta tags.
+
+```python
+get_language_by_parsing(source, encoding)
+```
+
+<ParamField path="source" type="string" required>
+  HTML source code
+</ParamField>
+
+<ParamField path="encoding" type="string" required>
+  Character encoding
+</ParamField>
+
+#### Returns
+
+<ResponseField name="return" type="string">
+  Detected language name or "unavailable"
+</ResponseField>
+
+---
+
+### check_errors()
+
+Decorator for error handling in methods.
+
+```python
+@check_errors(on_off=None)
+def your_method(self):
+    pass
+```
+
+---
+
+## Logging Methods
+
+### setup_logger()
+
+Configure logging for the instance.
+
+```python
+setup_logger(uuid=None, file=False, argv=None)
+```
+
+<ParamField path="uuid" type="string">
+  Unique identifier for log file
+</ParamField>
+
+<ParamField path="file" type="boolean" default="false">
+  Enable file logging
+</ParamField>
+
+<ParamField path="argv" type="Namespace">
+  Parsed arguments (for configuration)
+</ParamField>
+
+#### Example
+
+```python
+from uuid import uuid4
+from social_analyzer import SocialAnalyzer
+
+sa = SocialAnalyzer()
+sa.logs_dir = "./logs"
+sa.setup_logger(uuid=str(uuid4()), file=True)
+
+sa.log.info("Custom log message")
+```
+
+---
+
+## Complete Usage Example
+
+```python
+from social_analyzer import SocialAnalyzer
+from uuid import uuid4
+import json
+
+# Create instance
+sa = SocialAnalyzer(silent=False)
+
+# Configure
+sa.workers = 20
+sa.timeout = 1
+sa.headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+
+# Initialize
+sa.init_logic()
+
+# Run search
+results = sa.run_as_object(
+    username="johndoe",
+    websites="youtube twitter reddit instagram",
+    mode="fast",
+    output="json",
+    method="all",
+    filter="good,maybe",
+    profiles="detected,unknown",
+    extract=True,
+    metadata=True,
+    trim=False,
+    silent=True
+)
+
+# Process results
+if 'detected' in results:
+    print(f"\nFound {len(results['detected'])} profiles:\n")
+    
+    for profile in results['detected']:
+        print(f"[{profile['rate']}] {profile['link']}")
+        
+        if 'title' in profile:
+            print(f"  Title: {profile['title']}")
+        
+        if 'extracted' in profile:
+            if profile['extracted'].get('profiles'):
+                print(f"  Extracted profiles: {', '.join(profile['extracted']['profiles'])}")
+        
+        print()
+
+# Save to file
+with open('results.json', 'w') as f:
+    json.dump(results, f, indent=2)
+
+print("\nResults saved to results.json")
+```
+
+---
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Python Class Overview" icon="python" href="/api/python-class">
+    Class architecture and initialization
+  </Card>
+  
+  <Card title="CLI Reference" icon="terminal" href="/api/cli-reference">
+    Command-line interface documentation
+  </Card>
+  
+  <Card title="Output Formats" icon="file-export" href="/api/output-formats">
+    Understanding result structures
+  </Card>
+  
+  <Card title="Web Endpoints" icon="globe" href="/api/web-endpoints">
+    Express web API reference
+  </Card>
+</CardGroup>

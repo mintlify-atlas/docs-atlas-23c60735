@@ -1,0 +1,361 @@
+---
+title: 'CLI Reference'
+description: 'Complete command-line interface reference for Social Analyzer'
+icon: 'terminal'
+---
+
+## Overview
+
+Social Analyzer provides powerful CLI tools for both Node.js and Python implementations. Both CLIs offer the same functionality with slightly different syntax.
+
+## Node.js CLI
+
+### Installation
+
+```bash
+npm install -g social-analyzer
+```
+
+### Basic Usage
+
+```bash
+social-analyzer --username "johndoe" --websites "youtube tiktok"
+social-analyzer --username "johndoe"
+```
+
+### Command Line Arguments
+
+<ParamField path="--username" type="string" default="">
+  Username to search for. Examples: `johndoe`, `john_doe`, or `johndoe9999`
+</ParamField>
+
+<ParamField path="--websites" type="string" default="all">
+  Target websites separated by spaces. Examples: `youtube`, `tiktok tumblr`, or `all` for all websites
+</ParamField>
+
+<ParamField path="--mode" type="string" default="fast">
+  Analysis mode:
+  - `fast` - FindUserProfilesFast (quick scan)
+  - `slow` - FindUserProfilesSlow (deep analysis)
+  - `special` - FindUserProfilesSpecial (specialized detection)
+</ParamField>
+
+<ParamField path="--output" type="string" default="pretty">
+  Output format:
+  - `json` - JSON output for integration
+  - `pretty` - Human-readable formatted output
+</ParamField>
+
+<ParamField path="--options" type="string" default="">
+  Display options when profile is found (comma-separated): `link`, `rate`, `title`, `text`
+</ParamField>
+
+<ParamField path="--method" type="string" default="all">
+  Search method:
+  - `find` - Show only detected profiles
+  - `get` - Show all profiles regardless of detection
+  - `all` - Combine find & get methods
+</ParamField>
+
+<ParamField path="--filter" type="string" default="good">
+  Filter detected profiles by confidence level. Options: `good`, `maybe`, `bad`, or combine with comma: `good,bad`, or use `all`
+</ParamField>
+
+<ParamField path="--profiles" type="string" default="detected">
+  Filter profiles by status. Options: `detected`, `unknown`, `failed`, or combine: `detected,failed`, or use `all`
+</ParamField>
+
+<ParamField path="--top" type="string" default="0">
+  Select top N websites by popularity (e.g., `10`, `50`). When used, `--websites` is not needed.
+</ParamField>
+
+<ParamField path="--type" type="string" default="all">
+  Filter websites by category (e.g., `Adult`, `Music`)
+</ParamField>
+
+<ParamField path="--countries" type="string" default="all">
+  Filter websites by country codes separated by spaces (e.g., `us br ru`)
+</ParamField>
+
+<ParamField path="--extract" type="boolean" default="false">
+  Extract profiles, URLs, and patterns from detected profiles
+</ParamField>
+
+<ParamField path="--metadata" type="boolean" default="false">
+  Extract metadata using QeeqBox OSINT (requires pypi package)
+</ParamField>
+
+<ParamField path="--trim" type="boolean" default="false">
+  Trim long strings in output
+</ParamField>
+
+<ParamField path="--list" type="boolean" default="false">
+  List all available websites and exit
+</ParamField>
+
+<ParamField path="--gui" type="boolean" default="false">
+  Reserved for GUI mode (not fully implemented)
+</ParamField>
+
+<ParamField path="--cli" type="boolean" default="false">
+  Reserved for CLI mode (deprecated, not needed)
+</ParamField>
+
+<ParamField path="--docker" type="boolean" default="false">
+  Enable Docker compatibility mode
+</ParamField>
+
+<ParamField path="--grid" type="string" default="">
+  Grid display option (for web interface, not CLI)
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+
+```bash Basic Search
+social-analyzer --username "johndoe"
+```
+
+```bash Specific Websites
+social-analyzer --username "johndoe" --websites "youtube twitter reddit"
+```
+
+```bash JSON Output
+social-analyzer --username "johndoe" --output json
+```
+
+```bash Top Websites Only
+social-analyzer --username "johndoe" --top 50
+```
+
+```bash With Metadata Extraction
+social-analyzer --username "johndoe" --extract --metadata
+```
+
+```bash Filter by Country
+social-analyzer --username "johndoe" --countries "us uk ca"
+```
+
+```bash Show Good Results Only
+social-analyzer --username "johndoe" --filter good --profiles detected
+```
+
+</CodeGroup>
+
+---
+
+## Python CLI
+
+### Installation
+
+```bash
+pip install social-analyzer
+```
+
+### Basic Usage
+
+```bash
+python -m social-analyzer --username "johndoe"
+social-analyzer --username "johndoe" --websites "youtube tiktok"
+```
+
+### Command Line Arguments
+
+The Python CLI supports the same arguments as Node.js with these additional options:
+
+<ParamField path="--username" type="string" default="" required>
+  Username to search for. Examples: `johndoe`, `john_doe`, or `johndoe9999`
+</ParamField>
+
+<ParamField path="--websites" type="string" default="all">
+  Target websites separated by spaces. Examples: `youtube`, `tiktok tumblr`, or `all`
+</ParamField>
+
+<ParamField path="--mode" type="string" default="fast">
+  Analysis mode: `fast`, `slow`, or `special`
+</ParamField>
+
+<ParamField path="--output" type="string" default="pretty">
+  Output format: `json` or `pretty`
+</ParamField>
+
+<ParamField path="--options" type="string" default="">
+  Display fields: `link`, `rate`, `title`, `text`
+</ParamField>
+
+<ParamField path="--method" type="string" default="all">
+  Search method: `find`, `get`, or `all`
+</ParamField>
+
+<ParamField path="--filter" type="string" default="good">
+  Filter by confidence: `good`, `maybe`, `bad`, `good,bad`, or `all`
+</ParamField>
+
+<ParamField path="--profiles" type="string" default="detected">
+  Filter by status: `detected`, `unknown`, `failed`, `detected,failed`, or `all`
+</ParamField>
+
+<ParamField path="--countries" type="string" default="all">
+  Country filter: space-separated codes (e.g., `us br ru`)
+</ParamField>
+
+<ParamField path="--type" type="string" default="all">
+  Website category filter (e.g., `Adult`, `Music`)
+</ParamField>
+
+<ParamField path="--top" type="string" default="0">
+  Select top N websites by rank (e.g., `10`, `50`)
+</ParamField>
+
+<ParamField path="--extract" type="boolean">
+  Extract profiles, URLs, and patterns
+</ParamField>
+
+<ParamField path="--metadata" type="boolean">
+  Extract metadata using QeeqBox OSINT
+</ParamField>
+
+<ParamField path="--trim" type="boolean">
+  Trim long strings in output
+</ParamField>
+
+<ParamField path="--list" type="boolean">
+  List all available websites
+</ParamField>
+
+<ParamField path="--screenshots" type="boolean">
+  Capture screenshots of detected profiles (requires `--logs`)
+</ParamField>
+
+<ParamField path="--simplify" type="boolean">
+  Print only detected profile links (simplified output)
+</ParamField>
+
+<ParamField path="--gui" type="boolean">
+  Reserved for GUI mode (not implemented)
+</ParamField>
+
+<ParamField path="--cli" type="boolean">
+  Reserved for CLI mode (deprecated)
+</ParamField>
+
+### Settings Arguments
+
+<ParamField path="--headers" type="json" default="{}">
+  Custom HTTP headers as JSON dictionary
+  
+  ```bash
+  --headers '{"User-Agent": "Custom Agent"}'
+  ```
+</ParamField>
+
+<ParamField path="--logs" type="boolean">
+  Enable logging to file
+</ParamField>
+
+<ParamField path="--logs_dir" type="string" default="">
+  Custom directory for log files
+</ParamField>
+
+<ParamField path="--timeout" type="integer" default="0">
+  Delay in seconds between requests (0 = random delay 0.01-0.99s)
+</ParamField>
+
+<ParamField path="--silent" type="boolean">
+  Disable all console output (useful for scripting)
+</ParamField>
+
+### Python CLI Examples
+
+<CodeGroup>
+
+```bash Basic Search
+python -m social-analyzer --username "johndoe"
+```
+
+```bash With Logging
+social-analyzer --username "johndoe" --logs --logs_dir "./logs"
+```
+
+```bash Silent Mode with JSON
+social-analyzer --username "johndoe" --output json --silent
+```
+
+```bash Screenshots
+social-analyzer --username "johndoe" --screenshots --logs
+```
+
+```bash Simplified Output
+social-analyzer --username "johndoe" --simplify
+```
+
+```bash Custom Headers
+social-analyzer --username "johndoe" --headers '{"User-Agent": "Mozilla/5.0"}'
+```
+
+```bash With Timeout
+social-analyzer --username "johndoe" --timeout 2
+```
+
+</CodeGroup>
+
+---
+
+## Common Workflows
+
+### List Available Websites
+
+```bash
+# Node.js
+social-analyzer --list
+
+# Python
+python -m social-analyzer --list
+```
+
+### Quick Search with JSON Output
+
+```bash
+social-analyzer --username "johndoe" --output json > results.json
+```
+
+### Deep Analysis with Metadata
+
+```bash
+social-analyzer --username "johndoe" --mode slow --extract --metadata
+```
+
+### Search Specific Region
+
+```bash
+social-analyzer --username "johndoe" --countries "us" --top 100
+```
+
+### High Confidence Results Only
+
+```bash
+social-analyzer --username "johndoe" --filter good --profiles detected
+```
+
+---
+
+## Exit Codes
+
+- `0` - Success
+- `2` - Argument parsing error
+- Other non-zero values indicate errors during execution
+
+## Notes
+
+<Note>
+  The `--cli` flag is deprecated and will be removed in future versions. It's not needed for CLI operation.
+</Note>
+
+<Warning>
+  Using `--metadata` requires the QeeqBox OSINT package to be installed separately.
+</Warning>
+
+<Tip>
+  For automation and scripting, use `--output json --silent` to get clean JSON output without log messages.
+</Tip>

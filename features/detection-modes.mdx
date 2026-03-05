@@ -1,0 +1,253 @@
+---
+title: Detection Modes
+description: Understanding fast, slow, and special detection modes in Social Analyzer
+---
+
+Social Analyzer provides three distinct detection modes, each designed for different use cases and performance requirements. The detection mechanism uses a rating system from 0 to 100 (No-Maybe-Yes) to minimize false positives.
+
+## Fast Mode
+
+Fast mode (`FindUserProfilesFast`) uses HTTPS library requests to quickly scan profiles across multiple social media platforms. This is the recommended mode for most investigations.
+
+### How It Works
+
+The fast scanner:
+- Makes parallel HTTP requests to profile URLs
+- Analyzes HTML source code for detection patterns
+- Extracts titles, text content, and language information
+- Applies detection algorithms to determine profile existence
+- Retries failed requests automatically (up to 3 attempts)
+
+### Detection Process
+
+From `fast-scan.js:81-97`, the fast mode:
+
+```javascript
+const [ret, source] = await helper.get_url_wrapper_text(
+  site.url.replace('{username}', username)
+)
+
+const [temp_profile, temp_detected, detections_count] = 
+  await engine.detect('fast', uuid, username, options, site, source)
+
+if (temp_profile.found >= detection_level.found && 
+    detections_count >= detection_level.count) {
+  temp_profile.good = 'true'
+}
+```
+
+### Performance Characteristics
+
+- **Workers**: Processes 15 parallel requests by default
+- **Retries**: Automatically retries failed requests up to 3 times
+- **Timeout**: 2-5 seconds per request (configurable)
+- **Best For**: Initial broad scans across many platforms
+
+### Usage Example
+
+```bash
+# Fast mode (default)
+node app.js --username "johndoe"
+
+# Fast mode explicit
+node app.js --username "johndoe" --mode fast
+
+# With metadata extraction
+node app.js --username "johndoe" --metadata
+```
+
+<Note>
+Fast mode is the default and most efficient option for scanning across 1000+ websites. It provides a good balance between speed and accuracy.
+</Note>
+
+## Slow Mode
+
+Slow mode (`FindUserProfilesSlow`) uses Selenium WebDriver with headless Firefox to render JavaScript and interact with dynamic content. This mode provides more accurate results for JavaScript-heavy websites.
+
+### How It Works
+
+The slow scanner:
+- Launches headless Firefox browsers for each profile check
+- Waits for JavaScript to execute and content to load
+- Captures screenshots of detected profiles
+- Extracts both rendered HTML and visible text
+- Supports OCR detection for image-based content
+- Uses configurable implicit waits and timeouts
+
+### Detection Techniques
+
+From `slow-scan.js:65-96`, the slow mode implements:
+
+```javascript
+const driver = new Builder()
+  .forBrowser('firefox')
+  .setFirefoxOptions(new firefox.Options().headless().windowSize({
+    width: 640,
+    height: 480
+  }))
+  .build()
+
+await driver.get(link)
+source = await driver.getPageSource()
+screen_shot = await driver.takeScreenshot()
+title = await driver.getTitle()
+text_only = await driver.findElement(By.tagName('body')).getText()
+
+const [temp_profile, temp_detected, detections_count] = 
+  await engine.detect('slow', uuid, username, options, site, 
+                      source, text_only, screen_shot)
+```
+
+### Advanced Features
+
+- **Screenshots**: Captures profile screenshots in base64 format
+- **OCR Detection**: Can detect usernames in images
+- **JavaScript Rendering**: Handles SPAs and dynamic content
+- **Grid Support**: Can use Selenium Grid for distributed scanning
+
+### Performance Characteristics
+
+- **Workers**: Processes 8 parallel browser instances
+- **Memory**: Higher memory usage due to browser instances
+- **Timeout**: 5-10 seconds per profile (configurable per site)
+- **Best For**: High-accuracy scans on specific platforms
+
+### Usage Example
+
+```bash
+# Slow mode with screenshots
+node app.js --username "johndoe" --mode slow --screenshots
+
+# Slow mode with specific websites
+node app.js --username "johndoe" --mode slow --websites "facebook twitter"
+```
+
+<Warning>
+Slow mode requires Firefox and geckodriver to be installed. It consumes significantly more resources than fast mode.
+</Warning>
+
+## Special Mode
+
+Special mode (`FindUserProfilesSpecial`) implements custom detection logic for specific platforms that require unique interaction patterns or authentication flows.
+
+### Supported Platforms
+
+From `special-scan.js:15-24`, special mode currently supports:
+
+1. **Facebook** - Detects profiles using phone numbers, names, or profile names
+2. **Gmail** - Validates Gmail account existence
+3. **Google** - Checks Google account existence
+
+### Facebook Detection
+
+The Facebook special detection (`special-scan.js:33-84`):
+
+```javascript
+const link = 'https://mbasic.facebook.com/login/identify/?ctx=recover'
+await driver.get(link)
+await driver.findElement(By.id('identify_search_text_input'))
+  .sendKeys(username)
+await driver.findElement(By.id('did_submit')).click()
+source = await driver.getPageSource()
+
+if (source.includes('Try Entering Your Password')) {
+  temp_profile.found += 1
+}
+```
+
+### Gmail Detection
+
+The Gmail special detection (`special-scan.js:86-136`):
+
+```javascript
+const link = 'https://accounts.google.com/signup/v2/webcreateaccount...'
+await driver.get(link)
+await driver.findElement(By.id('username')).sendKeys(username)
+await driver.findElement(By.id('selectioni1')).click()
+const text_only = await driver.findElement(By.tagName('body')).getText()
+
+if (text_only.includes('That username is taken') && 
+    !text_only.includes('your username must be between')) {
+  temp_profile.found += 1
+}
+```
+
+### Google Account Detection
+
+The Google special detection (`special-scan.js:138-188`):
+
+```javascript
+const link = 'https://accounts.google.com/signin/v2/identifier...'
+await driver.get(link)
+await driver.findElement(By.id('identifierId')).sendKeys(username)
+await driver.findElement(By.xpath("//button[contains(.,'Next')]")).click()
+const text_only = await driver.findElement(By.tagName('body')).getText()
+
+if (text_only.includes("Couldn't sign you in") && 
+    !text_only.includes("Couldn't find your")) {
+  temp_profile.found += 1
+}
+```
+
+### Performance Characteristics
+
+- **Workers**: Processes 5 parallel special checks
+- **Timeout**: 10 seconds per platform
+- **Best For**: High-value targets on specific platforms
+
+### Usage Example
+
+```bash
+# Special mode for email/phone detection
+node app.js --username "john.doe@gmail.com" --mode special
+
+# Special mode for Facebook profile
+node app.js --username "+1234567890" --mode special
+```
+
+<Tip>
+Use special mode when you have specific identifiers like email addresses or phone numbers. It provides the most accurate results for supported platforms.
+</Tip>
+
+## Detection Rating System
+
+All detection modes use a scoring system to rate profile matches:
+
+- **100%**: Perfect match - all detection criteria met
+- **50-99%**: Maybe - some detection criteria met
+- **0-49%**: Bad - few detection criteria met
+
+The rating is calculated as:
+
+```javascript
+const temp_value = ((temp_profile.found / detections_count) * 100).toFixed(2)
+temp_profile.rate = '%' + temp_value
+
+if (temp_value >= 100.00) {
+  temp_profile.status = 'good'
+} else if (temp_value >= 50.00 && temp_value < 100.00) {
+  temp_profile.status = 'maybe'
+} else {
+  temp_profile.status = 'bad'
+}
+```
+
+## Choosing the Right Mode
+
+| Scenario | Recommended Mode | Reason |
+|----------|-----------------|--------|
+| Initial broad scan | Fast | Covers 1000+ sites quickly |
+| JavaScript-heavy sites | Slow | Renders dynamic content |
+| Gmail/Facebook specific | Special | Custom detection logic |
+| Limited resources | Fast | Minimal resource usage |
+| High accuracy needed | Slow | More detection techniques |
+| Email validation | Special | Purpose-built validators |
+
+## Detection Levels
+
+Social Analyzer supports two detection levels:
+
+- **High**: `count: 2, found: 1` - Requires fewer matches (default)
+- **Extreme**: `count: 1, found: 2` - Requires more matches for higher confidence
+
+These levels help reduce false positives by adjusting the threshold for positive detection.

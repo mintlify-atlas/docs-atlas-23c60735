@@ -1,0 +1,297 @@
+---
+title: 'CLI Options'
+description: 'Complete reference for all Social Analyzer command-line options'
+---
+
+## Overview
+
+Social Analyzer provides extensive command-line options for customizing your analysis. This page documents all available CLI flags for both Node.js and Python implementations.
+
+## Basic Usage
+
+```bash
+# Node.js
+node app.js --username "johndoe" --websites "youtube tiktok"
+
+# Python
+python app.py --username "johndoe" --websites "youtube tiktok"
+```
+
+## Required Arguments
+
+<ParamField path="username" type="string" default="">
+  The username to search for across social media sites.
+  
+  **Examples:**
+  - `johndoe`
+  - `john_doe`
+  - `johndoe9999`
+  
+  ```bash
+  node app.js --username "johndoe"
+  ```
+</ParamField>
+
+## Website Selection
+
+<ParamField path="websites" type="string" default="all">
+  Specify one or more websites to search, separated by spaces.
+  
+  **Values:**
+  - `all` - Search all available websites (default)
+  - Space-separated website names: `youtube tiktok tumblr`
+  
+  ```bash
+  node app.js --username "johndoe" --websites "youtube tiktok"
+  ```
+  
+  <Note>
+    Use `--list` to see all available websites
+  </Note>
+</ParamField>
+
+## Analysis Mode
+
+<ParamField path="mode" type="string" default="fast">
+  Analysis mode determines the depth and method of profile detection.
+  
+  **Options:**
+  - `fast` - FindUserProfilesFast (recommended for most cases)
+  - `slow` - FindUserProfilesSlow (more thorough, uses browser automation)
+  - `special` - FindUserProfilesSpecial (advanced detection methods)
+  
+  ```bash
+  # Fast analysis (default)
+  node app.js --username "johndoe" --mode fast
+  
+  # Slow analysis for better accuracy
+  node app.js --username "johndoe" --mode slow
+  ```
+</ParamField>
+
+## Output Options
+
+<ParamField path="output" type="string" default="pretty">
+  Control the output format.
+  
+  **Options:**
+  - `pretty` - Human-readable formatted output (default)
+  - `json` - JSON output for integration with other tools
+  
+  ```bash
+  # JSON output for parsing
+  node app.js --username "johndoe" --output json
+  
+  # Pretty output for terminal
+  node app.js --username "johndoe" --output pretty
+  ```
+</ParamField>
+
+<ParamField path="options" type="string" default="">
+  Specify which information to display when a profile is found.
+  
+  **Values:**
+  - `link` - Show profile URLs
+  - `rate` - Show detection confidence rate
+  - `title` - Show page titles
+  - `text` - Show extracted text content
+  - Multiple values can be combined: `link,rate,title`
+  
+  ```bash
+  node app.js --username "johndoe" --options "link,rate,title"
+  ```
+</ParamField>
+
+<ParamField path="simplify" type="boolean" default="false">
+  Print only the detected profile links (Python only).
+  
+  ```bash
+  python app.py --username "johndoe" --simplify
+  ```
+</ParamField>
+
+## Detection Methods
+
+<ParamField path="method" type="string" default="all">
+  Control which profiles to display based on detection status.
+  
+  **Options:**
+  - `find` - Show only detected profiles
+  - `get` - Show all profiles regardless of detection status
+  - `all` - Combine find & get (default)
+  
+  ```bash
+  node app.js --username "johndoe" --method find
+  ```
+</ParamField>
+
+## Filtering Results
+
+<ParamField path="filter" type="string" default="good">
+  Filter detected profiles by detection quality.
+  
+  **Options:**
+  - `good` - High confidence detections (default)
+  - `maybe` - Uncertain detections
+  - `bad` - Low confidence detections
+  - `all` - Show all detection qualities
+  - Combine with commas: `good,maybe`
+  
+  ```bash
+  # Show only high confidence results
+  node app.js --username "johndoe" --filter good
+  
+  # Show high and medium confidence
+  node app.js --username "johndoe" --filter "good,maybe"
+  ```
+</ParamField>
+
+<ParamField path="profiles" type="string" default="detected">
+  Filter profiles by detection status.
+  
+  **Options:**
+  - `detected` - Successfully detected profiles (default)
+  - `unknown` - Profiles with unknown status
+  - `failed` - Failed detection attempts
+  - `all` - Show all profile statuses
+  - Combine with commas: `detected,failed`
+  
+  ```bash
+  node app.js --username "johndoe" --profiles "detected,failed"
+  ```
+</ParamField>
+
+## Data Extraction
+
+<ParamField path="extract" type="boolean" default="false">
+  Extract profiles, URLs, and patterns from detected pages.
+  
+  ```bash
+  node app.js --username "johndoe" --extract
+  ```
+</ParamField>
+
+<ParamField path="metadata" type="boolean" default="false">
+  Extract metadata from profiles using QeeqBox OSINT (requires pypi package).
+  
+  ```bash
+  python app.py --username "johndoe" --metadata
+  ```
+</ParamField>
+
+<ParamField path="trim" type="boolean" default="false">
+  Trim long strings in the output for better readability.
+  
+  ```bash
+  node app.js --username "johndoe" --trim
+  ```
+</ParamField>
+
+## Listing & Information
+
+<ParamField path="list" type="boolean" default="false">
+  List all available websites and exit.
+  
+  ```bash
+  node app.js --list
+  python app.py --list
+  ```
+</ParamField>
+
+## Advanced Options
+
+<ParamField path="screenshots" type="boolean" default="false">
+  Capture screenshots from detected profiles (Python only, requires --logs).
+  
+  ```bash
+  python app.py --username "johndoe" --screenshots --logs
+  ```
+  
+  <Warning>
+    This option requires `--logs` to be enabled and uses browser automation.
+  </Warning>
+</ParamField>
+
+<ParamField path="gui" type="boolean" default="false">
+  Reserved for GUI mode (not fully implemented).
+  
+  ```bash
+  node app.js --gui
+  ```
+</ParamField>
+
+<ParamField path="cli" type="boolean" default="false">
+  Reserved for CLI mode (not needed, included for compatibility).
+  
+  ```bash
+  node app.js --cli
+  ```
+</ParamField>
+
+<ParamField path="docker" type="boolean" default="false">
+  Enable Docker compatibility mode (Node.js only).
+  
+  ```bash
+  node app.js --docker
+  ```
+</ParamField>
+
+<ParamField path="grid" type="string" default="">
+  Grid option for distributed scanning (not for CLI use).
+</ParamField>
+
+## Complete Example
+
+```bash
+# Comprehensive search with multiple options
+node app.js \
+  --username "johndoe" \
+  --websites "youtube tiktok instagram" \
+  --mode fast \
+  --output json \
+  --method find \
+  --filter "good,maybe" \
+  --extract \
+  --trim
+```
+
+## FAQ
+
+<Accordion title="What's the difference between --filter and --profiles?">
+  - `--filter` controls the **quality** of detections (good/maybe/bad confidence)
+  - `--profiles` controls the **status** of profiles (detected/unknown/failed)
+  
+  Use `--filter good` for high-confidence results, and `--profiles detected` to only see successful detections.
+</Accordion>
+
+<Accordion title="Should I use fast, slow, or special mode?">
+  - **fast**: Best for most use cases, quick HTTP-based detection
+  - **slow**: Uses browser automation for JavaScript-heavy sites, more accurate but slower
+  - **special**: Advanced detection methods for difficult cases
+  
+  Start with `fast` mode. If you need higher accuracy, try `slow` mode.
+</Accordion>
+
+<Accordion title="How do I save results to a file?">
+  Use `--output json` and redirect the output:
+  
+  ```bash
+  node app.js --username "johndoe" --output json > results.json
+  ```
+</Accordion>
+
+<Accordion title="Can I search multiple usernames at once?">
+  No, Social Analyzer searches one username at a time. To search multiple usernames, run the command multiple times or create a shell script:
+  
+  ```bash
+  for user in johndoe janedoe alice; do
+    node app.js --username "$user" --output json > "${user}.json"
+  done
+  ```
+</Accordion>
+
+## See Also
+
+- [Proxy Settings](/configuration/proxy-settings) - Configure proxy, user-agent, and timeouts
+- [Website Selection](/configuration/websites-selection) - Advanced website filtering options
+- [Quickstart](/quickstart) - Get started with Social Analyzer

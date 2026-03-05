@@ -1,0 +1,450 @@
+---
+title: Visualization
+description: Force-directed graphs and profile visualization using Ixora
+---
+
+Social Analyzer provides powerful visualization capabilities through force-directed graphs that help investigators understand relationships between profiles, metadata, and patterns.
+
+## Overview
+
+The visualization module (`visualize.js`) uses Ixora, a force-directed graph library, to create interactive visualizations of:
+
+- Detected profiles and their relationships
+- Metadata extracted from profiles
+- Cross-platform connections
+- Multi-profile correlations
+
+## Force-Directed Graphs
+
+Force-directed graphs display nodes (profiles, metadata) and edges (relationships) in a physics-based layout where connected items attract and unconnected items repel each other.
+
+### Benefits
+
+- **Visual Pattern Recognition**: Quickly identify clusters and connections
+- **Interactive Exploration**: Search, filter, and navigate through data
+- **Relationship Mapping**: See how profiles relate across platforms
+- **Metadata Visualization**: Display extracted information hierarchically
+
+## How It Works
+
+From `visualize.js:4-85`, the visualization engine:
+
+```javascript
+async function visualize_force_graph (req, detected, type) {
+  const graph = new QBIxora('Social-Analyzer', false)
+  const temp_filtered = detected.filter(item => item.status === 'good')
+  
+  if (temp_filtered.length > 0) {
+    // Add root node for the username
+    graph.add_node(req.body.string, req.body.string, {
+      header: req.body.string
+    })
+    
+    // Process each detected profile
+    temp_filtered.forEach(site => {
+      // Add profile node
+      graph.add_node(site.link, site.link, {
+        header: site.link
+      })
+      
+      // Connect profile to username
+      graph.add_edge(site.username, site.link, {
+        width: 1
+      })
+      
+      // Add metadata nodes if available
+      if ('metadata' in site) {
+        if (site.metadata !== 'unavailable' && site.metadata.length > 0) {
+          site.metadata.forEach(meta => {
+            if ('content' in meta) {
+              // Create metadata label
+              let temp_string = ''
+              if ('name' in meta) {
+                temp_string = meta.name + ' -> ' + meta.content
+              } else if ('itemprop' in meta) {
+                temp_string = meta.itemprop + ' -> ' + meta.content
+              } else if ('property' in meta) {
+                temp_string = meta.property + ' -> ' + meta.content
+              }
+              
+              // Truncate long strings
+              if (temp_string.length > 70) {
+                temp_string = temp_string.substring(0, 70)
+                  .replace(/\r?\n|\r/g, '') + '..'
+              }
+              
+              // Add metadata node
+              graph.add_node(temp_string, temp_string, {
+                header: temp_string
+              })
+              
+              // Connect metadata to profile
+              graph.add_edge(site.link, temp_string, {
+                width: 1
+              })
+            }
+          })
+        }
+      }
+    })
+  }
+  
+  const ret_graph = graph.create_graph(
+    '#ixora-graph',
+    'Ixora random nodes example',
+    'Search Box',
+    'Search in extracted patterns',
+    'https://github.com/qeeqbox/ixora',
+    'Qeeqbox-ixora',
+    ['search', 'tooltip'],
+    10,
+    100,
+    graph.graph,
+    'object',
+    undefined,
+    undefined
+  )
+  
+  return ret_graph
+}
+```
+
+## Graph Structure
+
+### Node Types
+
+1. **Root Node**: The searched username(s)
+2. **Profile Nodes**: Detected social media profiles
+3. **Metadata Nodes**: Extracted metadata from profiles
+
+### Edge Types
+
+1. **Username → Profile**: Direct connection from search term to detected profile
+2. **Profile → Metadata**: Connection from profile to its metadata
+
+### Example Structure
+
+```
+johndoe (root)
+  ├─→ twitter.com/johndoe (profile)
+  │    ├─→ og:title -> John Doe (metadata)
+  │    ├─→ og:description -> Developer (metadata)
+  │    └─→ og:image -> https://... (metadata)
+  ├─→ github.com/johndoe (profile)
+  │    ├─→ description -> Open Source Contributor (metadata)
+  │    └─→ location -> San Francisco (metadata)
+  └─→ linkedin.com/in/johndoe (profile)
+       ├─→ og:title -> John Doe - LinkedIn (metadata)
+       └─→ description -> Software Engineer (metadata)
+```
+
+## Multi-Profile Visualization
+
+When searching multiple usernames simultaneously, the visualization creates a hierarchical structure.
+
+From `visualize.js:9-22`:
+
+```javascript
+if (req.body.group) {
+  // Add root node for all usernames
+  graph.add_node(req.body.string, req.body.string, {
+    header: req.body.string
+  })
+
+  // Add individual username nodes
+  req.body.string.split(',').forEach(username => {
+    graph.add_node(username, username, {
+      header: username
+    })
+
+    // Connect username to root
+    graph.add_edge(username, req.body.string, {
+      width: 1
+    })
+  })
+}
+```
+
+### Multi-Profile Structure
+
+```
+"johndoe,janedoe" (root)
+  ├─→ johndoe (username)
+  │    ├─→ twitter.com/johndoe
+  │    └─→ github.com/johndoe
+  └─→ janedoe (username)
+       ├─→ twitter.com/janedoe
+       └─→ github.com/janedoe
+```
+
+## Usage
+
+### Basic Visualization
+
+```bash
+# Generate visualization (requires metadata)
+node app.js --username "johndoe" --metadata
+
+# View the graph
+# Open http://localhost:9005/graph.html in browser
+```
+
+### Multi-Profile Visualization
+
+```bash
+# Visualize multiple related profiles
+node app.js --username "johndoe,jdoe,john_doe" --metadata
+```
+
+### With Pattern Extraction
+
+```bash
+# Include extracted patterns in visualization
+node app.js --username "johndoe" --metadata --extract
+```
+
+<Note>
+Visualization requires the `--metadata` flag. Without metadata, the graph will only show username and profile nodes without detailed information.
+</Note>
+
+## Interactive Features
+
+The Ixora-powered visualization provides several interactive features:
+
+### Search Functionality
+
+From `visualize.js:73`, the graph includes a search box:
+
+```javascript
+const ret_graph = graph.create_graph(
+  '#ixora-graph',
+  'Ixora random nodes example',
+  'Search Box',  // Search box label
+  'Search in extracted patterns',  // Search placeholder
+  'https://github.com/qeeqbox/ixora',
+  'Qeeqbox-ixora',
+  ['search', 'tooltip'],  // Enabled features
+  // ...
+)
+```
+
+### Tooltips
+
+Hover over nodes to see detailed information about:
+- Profile URLs
+- Metadata content
+- Relationships
+
+### Physics Simulation
+
+The graph uses physics parameters:
+- Charge: 10 (repulsion strength)
+- Distance: 100 (preferred edge length)
+
+These create natural clustering of related information.
+
+## Metadata Truncation
+
+Long metadata strings are automatically truncated for better visualization.
+
+From `visualize.js:51-54`:
+
+```javascript
+if (temp_string.length > 70) {
+  temp_string = temp_string.substring(0, 70).replace(/\r?\n|\r/g, '') + '..'
+} else {
+  temp_string = temp_string.replace(/\r?\n|\r/g, '')
+}
+```
+
+This ensures:
+- Readable node labels
+- Clean graph appearance
+- Better performance with many nodes
+
+## Accessing the Visualization
+
+### Web Interface
+
+The visualization is available through the web app:
+
+1. Start Social Analyzer:
+   ```bash
+   npm start
+   ```
+
+2. Navigate to: `http://localhost:9005/app.html`
+
+3. Enter username and enable metadata extraction
+
+4. View results with the graph visualization
+
+### Direct Graph Access
+
+The graph is saved to a static file:
+
+```bash
+# The graph HTML is saved at:
+public/graph.html
+
+# Access directly:
+http://localhost:9005/graph.html
+```
+
+### Graph Initialization
+
+From `visualize.js` integration in `helper.js:81-83`:
+
+```javascript
+let temp_ixora = new QBIxora('Social-Analyzer', false)
+temp_ixora.save_base_html(public_graph_path)
+temp_ixora = null
+```
+
+The base graph template is initialized when the application starts.
+
+## Practical Applications
+
+### OSINT Investigations
+
+Visualization helps investigators:
+- Identify profile clusters
+- Find shared metadata across platforms
+- Discover hidden connections
+- Map digital footprints
+
+### Example Investigation Flow
+
+```bash
+# 1. Search with metadata extraction
+node app.js --username "johndoe" --metadata --extract --filter good
+
+# 2. View visualization
+# Open http://localhost:9005/graph.html
+
+# 3. Analyze patterns
+# - Look for shared email addresses
+# - Check for consistent profile descriptions
+# - Identify cross-platform links
+
+# 4. Expand search based on findings
+node app.js --username "johndoe,newfindingusername" --metadata --extract
+```
+
+### Multi-Target Correlation
+
+```bash
+# Compare multiple suspects
+node app.js --username "suspect1,suspect2,suspect3" \
+  --metadata --extract --filter good
+
+# Visualization shows:
+# - Shared profiles
+# - Common metadata
+# - Potential connections
+```
+
+## Graph Data Export
+
+The visualization function returns structured graph data:
+
+```javascript
+return {
+  graph: {
+    nodes: [
+      { id: 'johndoe', label: 'johndoe' },
+      { id: 'twitter.com/johndoe', label: 'twitter.com/johndoe' },
+      // ...
+    ],
+    links: [
+      { source: 'johndoe', target: 'twitter.com/johndoe' },
+      // ...
+    ]
+  }
+}
+```
+
+This data can be:
+- Saved to JSON files
+- Imported into other visualization tools
+- Processed for further analysis
+
+## Performance Considerations
+
+### Node Limits
+
+For optimal performance:
+- **< 100 nodes**: Smooth interaction
+- **100-500 nodes**: May experience slight lag
+- **> 500 nodes**: Consider filtering results
+
+### Optimization Strategies
+
+1. **Filter by status**: Use `--filter good` to show only confirmed profiles
+2. **Limit websites**: Use `--top 50` or specific `--websites`
+3. **Selective metadata**: Only extract metadata for high-priority platforms
+
+```bash
+# Optimized visualization command
+node app.js --username "johndoe" \
+  --metadata --filter good --top 50
+```
+
+## Customization
+
+The Ixora graph can be customized by modifying parameters in `visualize.js:73`:
+
+```javascript
+const ret_graph = graph.create_graph(
+  '#ixora-graph',           // Container ID
+  'Social Analyzer Graph',  // Title
+  'Search',                 // Search label
+  'Search nodes...',        // Placeholder
+  'https://...',            // Link URL
+  'Project Name',           // Link text
+  ['search', 'tooltip'],    // Features
+  10,                       // Charge (repulsion)
+  100,                      // Distance (edge length)
+  graph.graph,              // Graph data
+  'object',                 // Return type
+  undefined,                // Custom callback
+  undefined                 // Custom options
+)
+```
+
+<Tip>
+Experiment with charge and distance parameters to adjust how tightly nodes cluster together. Lower charge values create tighter clusters.
+</Tip>
+
+## Troubleshooting
+
+### Empty Graph
+
+**Problem**: Graph shows no nodes
+
+**Solutions**:
+- Ensure `--metadata` flag is enabled
+- Check that profiles were detected (`--filter good`)
+- Verify network connectivity
+
+### Too Many Nodes
+
+**Problem**: Graph is cluttered and slow
+
+**Solutions**:
+- Use `--filter good` to show only confirmed profiles
+- Limit websites with `--top N` or `--websites`
+- Disable pattern extraction if not needed
+
+### Metadata Not Showing
+
+**Problem**: Only username and profile nodes visible
+
+**Solutions**:
+- Confirm `--metadata` flag is set
+- Check that detected profiles have metadata
+- Try slow mode for better metadata extraction
+
+<Warning>
+Large graphs with 500+ nodes may impact browser performance. Consider filtering your results for better visualization experience.
+</Warning>

@@ -1,0 +1,614 @@
+---
+title: 'Docker Deployment'
+description: 'Run Social Analyzer in Docker containers with optional Selenium Grid'
+---
+
+Docker deployment provides an isolated, reproducible environment for running Social Analyzer. The docker-compose setup includes Selenium Grid integration for advanced detection modes and parallel processing.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Docker">
+    Install Docker Engine on your system:
+    
+    ```bash
+    # Ubuntu/Debian
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    ```
+  </Step>
+  
+  <Step title="Install Docker Compose">
+    Install Docker Compose:
+    
+    ```bash
+    sudo apt-get install docker-compose
+    ```
+  </Step>
+  
+  <Step title="Clone repository">
+    ```bash
+    git clone https://github.com/qeeqbox/social-analyzer.git
+    cd social-analyzer
+    ```
+  </Step>
+</Steps>
+
+## Quick Start
+
+### Simple Docker Run
+
+Run Social Analyzer as a single container:
+
+```bash
+docker build -t social-analyzer .
+docker run -p 9005:9005 social-analyzer
+```
+
+Access the web interface at:
+```
+http://localhost:9005/app.html
+```
+
+### Docker Compose (Recommended)
+
+Use docker-compose for the complete setup with Selenium Grid:
+
+```bash
+docker-compose up
+```
+
+This starts:
+- Social Analyzer web application
+- Selenium Hub (port 4444)
+- Firefox node for browser automation
+
+## Docker Compose Configuration
+
+The `docker-compose.yml` file defines a multi-container setup:
+
+```yaml
+version: "3" 
+services:
+  social-analyzer:
+    build: .
+    ports:
+      - "9005:9005"
+    depends_on:
+      - hub
+    links:
+      - hub
+    entrypoint: npm start -- --docker --grid "http://hub:4444/wd/hub"
+    
+  hub:
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+    environment:
+      GRID_MAX_SESSION: 16
+      GRID_BROWSER_TIMEOUT: 6000
+      GRID_TIMEOUT: 6000
+      
+  firefox:
+    image: selenium/node-firefox
+    container_name: web-automation_firefox
+    depends_on:
+      - hub
+    environment:
+      SE_EVENT_BUS_HOST: hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: ${CPU_CORES:-2}
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+      - "9002:5900"
+    links:
+      - hub
+```
+
+## Architecture Overview
+
+The Docker Compose setup consists of three services:
+
+<Tabs>
+  <Tab title="Social Analyzer">
+    **Main application container**
+    
+    - Runs the Node.js web server
+    - Serves the web interface on port 9005
+    - Connects to Selenium Hub for browser automation
+    - Handles detection and analysis logic
+  </Tab>
+  
+  <Tab title="Selenium Hub">
+    **Central coordination service**
+    
+    - Manages browser node connections
+    - Routes automation requests to available nodes
+    - Handles up to 16 concurrent sessions
+    - Exposed on port 4444
+  </Tab>
+  
+  <Tab title="Firefox Node">
+    **Browser automation worker**
+    
+    - Provides Firefox browser instances
+    - Executes WebDriver commands
+    - Supports parallel execution
+    - VNC server on port 9002 for debugging
+  </Tab>
+</Tabs>
+
+## Starting the Services
+
+### Start in foreground
+
+```bash
+docker-compose up
+```
+
+Watch logs in real-time and stop with `Ctrl+C`.
+
+### Start in background
+
+```bash
+docker-compose up -d
+```
+
+Runs containers in detached mode.
+
+### Build and start
+
+```bash
+docker-compose up --build
+```
+
+Rebuilds images before starting (use after code changes).
+
+## Managing Containers
+
+### View running containers
+
+```bash
+docker-compose ps
+```
+
+Shows status of all services:
+
+```
+              Name                            Command               State           Ports         
+-------------------------------------------------------------------------------------------------
+social-analyzer_hub_1              /opt/bin/entry_point.sh          Up      0.0.0.0:4444->4444/tcp
+social-analyzer_social-analyzer_1  docker-entrypoint.sh npm ...    Up      0.0.0.0:9005->9005/tcp
+web-automation_firefox             /opt/bin/entry_point.sh          Up      0.0.0.0:9002->5900/tcp
+```
+
+### View logs
+
+<CodeGroup>
+```bash All services
+docker-compose logs -f
+```
+
+```bash Specific service
+docker-compose logs -f social-analyzer
+```
+
+```bash Last 100 lines
+docker-compose logs --tail=100 social-analyzer
+```
+</CodeGroup>
+
+### Stop services
+
+```bash
+docker-compose stop
+```
+
+Stops containers without removing them.
+
+### Stop and remove
+
+```bash
+docker-compose down
+```
+
+Stops and removes all containers, networks, and volumes.
+
+### Restart services
+
+```bash
+docker-compose restart
+```
+
+Restarts all services.
+
+## Configuration Options
+
+### Environment Variables
+
+Customize behavior with environment variables:
+
+<CodeGroup>
+```bash CPU Cores
+CPU_CORES=4 docker-compose up
+```
+
+```bash Custom Port
+PORT=8080 docker-compose up
+```
+</CodeGroup>
+
+#### Available Variables
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `CPU_CORES` | Firefox node max sessions | `2` |
+| `PORT` | Social Analyzer web port | `9005` |
+| `GRID_MAX_SESSION` | Hub max sessions | `16` |
+| `GRID_BROWSER_TIMEOUT` | Browser timeout (ms) | `6000` |
+| `GRID_TIMEOUT` | Grid timeout (ms) | `6000` |
+
+### Custom docker-compose.yml
+
+Create a custom configuration:
+
+```yaml
+version: "3"
+services:
+  social-analyzer:
+    build: .
+    ports:
+      - "8080:9005"  # Custom external port
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - hub
+    links:
+      - hub
+    entrypoint: npm start -- --docker --grid "http://hub:4444/wd/hub"
+  
+  hub:
+    image: selenium/hub:latest
+    ports:
+      - "4444:4444"
+    environment:
+      GRID_MAX_SESSION: 32  # Increased capacity
+      GRID_BROWSER_TIMEOUT: 10000
+      GRID_TIMEOUT: 10000
+  
+  firefox:
+    image: selenium/node-firefox:latest
+    deploy:
+      replicas: 3  # Multiple Firefox nodes
+    environment:
+      SE_EVENT_BUS_HOST: hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 4
+    volumes:
+      - /dev/shm:/dev/shm
+    shm_size: 2gb  # Increased shared memory
+```
+
+## Selenium Grid Integration
+
+### Grid URL
+
+The application automatically uses the grid when started with docker-compose:
+
+```
+http://hub:4444/wd/hub
+```
+
+### Benefits of Grid Mode
+
+- **Parallel Processing**: Multiple browser instances run simultaneously
+- **Better Performance**: Faster execution for advanced detection modes
+- **Isolation**: Browser processes isolated from main application
+- **Scalability**: Add more browser nodes as needed
+
+### Accessing Grid Console
+
+View the Selenium Grid status page:
+
+```
+http://localhost:4444/grid/console
+```
+
+Shows:
+- Available browser nodes
+- Active sessions
+- Browser versions
+- Node status
+
+### VNC Access to Browser
+
+Connect to the Firefox container via VNC for debugging:
+
+```
+vnc://localhost:9002
+```
+
+Default VNC password: `secret`
+
+Watch the browser in real-time as Social Analyzer performs checks.
+
+## Scaling Browser Nodes
+
+### Add more Firefox nodes
+
+```bash
+docker-compose up --scale firefox=5
+```
+
+Starts 5 Firefox nodes for increased parallelism.
+
+### Add Chrome nodes
+
+Modify `docker-compose.yml` to include Chrome:
+
+```yaml
+chrome:
+  image: selenium/node-chrome
+  depends_on:
+    - hub
+  environment:
+    SE_EVENT_BUS_HOST: hub
+    SE_EVENT_BUS_PUBLISH_PORT: 4442
+    SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+    SE_NODE_MAX_SESSIONS: 2
+  volumes:
+    - /dev/shm:/dev/shm
+  links:
+    - hub
+```
+
+Then start:
+
+```bash
+docker-compose up
+```
+
+## Using the Dockerized Application
+
+Once running, access the web interface:
+
+### Web Interface
+
+```
+http://localhost:9005/app.html
+```
+
+Use normally - the grid option is automatically enabled.
+
+### CLI in Container
+
+Execute CLI commands inside the container:
+
+```bash
+docker exec -it social-analyzer_social-analyzer_1 node app.js --username "johndoe"
+```
+
+### Python CLI in Container
+
+If you've built a container with Python support:
+
+```bash
+docker exec -it social-analyzer_social-analyzer_1 python3 app.py --username "johndoe"
+```
+
+## Data Persistence
+
+### Volume Mounting
+
+Mount a local directory to persist logs:
+
+```yaml
+social-analyzer:
+  build: .
+  ports:
+    - "9005:9005"
+  volumes:
+    - ./logs:/app/logs  # Persist logs
+    - ./data:/app/data  # Persist data files
+```
+
+Then:
+
+```bash
+mkdir logs data
+docker-compose up
+```
+
+### Export Results
+
+Copy results from container:
+
+```bash
+docker cp social-analyzer_social-analyzer_1:/app/logs ./local-logs
+```
+
+## Performance Optimization
+
+### Increase Shared Memory
+
+Browser containers need adequate shared memory:
+
+```yaml
+firefox:
+  image: selenium/node-firefox
+  shm_size: 2gb  # Increase from default
+```
+
+### Resource Limits
+
+Set CPU and memory limits:
+
+```yaml
+firefox:
+  image: selenium/node-firefox
+  deploy:
+    resources:
+      limits:
+        cpus: '2'
+        memory: 2G
+      reservations:
+        cpus: '1'
+        memory: 1G
+```
+
+### Network Optimization
+
+Use a custom network for better isolation:
+
+```yaml
+networks:
+  social-analyzer-net:
+    driver: bridge
+
+services:
+  social-analyzer:
+    networks:
+      - social-analyzer-net
+  hub:
+    networks:
+      - social-analyzer-net
+  firefox:
+    networks:
+      - social-analyzer-net
+```
+
+## Troubleshooting
+
+### Containers won't start
+
+Check if ports are already in use:
+
+```bash
+sudo lsof -i :9005
+sudo lsof -i :4444
+```
+
+Kill conflicting processes or change ports.
+
+### Hub connection failed
+
+Verify hub is running:
+
+```bash
+docker-compose ps hub
+```
+
+Test hub endpoint:
+
+```bash
+curl http://localhost:4444/status
+```
+
+### Firefox node not connecting
+
+Check Firefox logs:
+
+```bash
+docker-compose logs firefox
+```
+
+Restart the Firefox service:
+
+```bash
+docker-compose restart firefox
+```
+
+### Out of memory errors
+
+Increase Docker memory allocation in Docker Desktop settings or for Docker daemon:
+
+```bash
+sudo nano /etc/docker/daemon.json
+```
+
+```json
+{
+  "default-shm-size": "2gb"
+}
+```
+
+### Slow performance
+
+- Reduce `GRID_MAX_SESSION` to lower concurrent load
+- Increase `CPU_CORES` if your system has capacity
+- Scale down Firefox nodes if over-subscribed
+- Check host system resources (CPU, memory, disk I/O)
+
+## Production Deployment
+
+<Warning>
+  Do not expose Social Analyzer to the public internet without proper security measures. It lacks built-in authentication and access control.
+</Warning>
+
+### Recommended Security
+
+1. **Reverse Proxy**: Use nginx or Apache with authentication
+2. **VPN**: Restrict access via VPN
+3. **Firewall**: Only allow specific IP addresses
+4. **HTTPS**: Use TLS/SSL certificates
+5. **Secrets**: Use Docker secrets for API keys
+
+### Example nginx Configuration
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name social-analyzer.local;
+    
+    ssl_certificate /etc/ssl/certs/cert.pem;
+    ssl_certificate_key /etc/ssl/private/key.pem;
+    
+    auth_basic "Restricted Access";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    
+    location / {
+        proxy_pass http://localhost:9005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+## Maintenance
+
+### Update Images
+
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+### Clean Up
+
+```bash
+# Remove stopped containers
+docker-compose down
+
+# Remove all data
+docker-compose down -v
+
+# Remove images
+docker-compose down --rmi all
+```
+
+### Health Checks
+
+Add health checks to services:
+
+```yaml
+social-analyzer:
+  build: .
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:9005/app.html"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+```

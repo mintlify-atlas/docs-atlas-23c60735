@@ -1,0 +1,442 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions for Social Analyzer"
+icon: "wrench"
+---
+
+## Installation Issues
+
+### Python Package Installation Fails
+
+<Accordion title="Error: Could not install packages due to an EnvironmentError">
+  **Problem:** Permission denied when installing social-analyzer.
+
+  **Solution:**
+  ```bash
+  # Use pip with --user flag
+  pip3 install --user social-analyzer
+  ```
+
+  Or install with sudo (not recommended for security):
+  ```bash
+  sudo pip3 install social-analyzer
+  ```
+</Accordion>
+
+<Accordion title="ModuleNotFoundError: No module named 'social-analyzer'">
+  **Problem:** Python cannot find the installed module.
+
+  **Solution:**
+  1. Ensure you installed for the correct Python version:
+     ```bash
+     python3 -m pip install social-analyzer
+     ```
+  
+  2. Check your Python path:
+     ```bash
+     python3 -m site
+     ```
+  
+  3. Run directly with python -m:
+     ```bash
+     python3 -m social-analyzer --username "johndoe"
+     ```
+</Accordion>
+
+### Node.js Installation Issues
+
+<Accordion title="npm install fails with dependency errors">
+  **Problem:** Package dependencies cannot be resolved.
+
+  **Solution:**
+  ```bash
+  # Clear npm cache
+  npm cache clean --force
+  
+  # Delete node_modules and package-lock.json
+  rm -rf node_modules package-lock.json
+  
+  # Reinstall
+  npm install
+  ```
+</Accordion>
+
+<Accordion title="Error: Cannot find module 'express'">
+  **Problem:** Required Node.js modules are missing.
+
+  **Solution:**
+  ```bash
+  cd social-analyzer
+  npm update
+  npm install
+  ```
+</Accordion>
+
+## Runtime Errors
+
+### Browser and WebDriver Issues
+
+<Accordion title="selenium.common.exceptions.WebDriverException: Message: 'geckodriver' executable needs to be in PATH">
+  **Problem:** Firefox WebDriver (geckodriver) is not installed or not in system PATH.
+
+  **Solution:**
+  
+  **Linux:**
+  ```bash
+  sudo apt-get install firefox-esr
+  ```
+  
+  **macOS:**
+  ```bash
+  brew install geckodriver
+  ```
+  
+  **Manual installation:**
+  1. Download geckodriver from https://github.com/mozilla/geckodriver/releases
+  2. Extract and move to /usr/local/bin:
+     ```bash
+     sudo mv geckodriver /usr/local/bin/
+     sudo chmod +x /usr/local/bin/geckodriver
+     ```
+</Accordion>
+
+<Accordion title="Screenshots not working">
+  **Problem:** Screenshot feature fails or produces blank images.
+
+  **Solution:**
+  1. Ensure Chrome/Chromium is installed:
+     ```bash
+     # Linux
+     sudo apt-get install chromium-browser
+     
+     # macOS
+     brew install --cask google-chrome
+     ```
+  
+  2. Update to the latest Chrome version
+  
+  3. Try without headless mode (modify in code)
+  
+  4. Check for error messages in logs:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --screenshots --logs
+     ```
+</Accordion>
+
+<Warning>
+Screenshots require the **latest version** of Chrome or Chromium. Outdated browsers may cause the screenshot feature to fail silently.
+</Warning>
+
+### OCR and Tesseract Issues
+
+<Accordion title="TesseractNotFoundError: tesseract is not installed or it's not in your PATH">
+  **Problem:** Tesseract OCR is not installed.
+
+  **Solution:**
+  
+  **Linux:**
+  ```bash
+  sudo apt-get install tesseract-ocr
+  ```
+  
+  **macOS:**
+  ```bash
+  brew install tesseract
+  ```
+  
+  **Windows:**
+  Download and install from: https://github.com/UB-Mannheim/tesseract/wiki
+</Accordion>
+
+### Network and Connection Issues
+
+<Accordion title="Connection timeout errors">
+  **Problem:** Requests are timing out when checking websites.
+
+  **Solution:**
+  1. Increase timeout value:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --timeout 15
+     ```
+  
+  2. Check your internet connection
+  
+  3. Use a VPN if websites are geo-blocked
+  
+  4. Some sites may be temporarily down - retry later
+</Accordion>
+
+<Accordion title="Too many failed profiles">
+  **Problem:** Most searches return "failed" status.
+
+  **Solution:**
+  1. Websites may be blocking automated requests. Try:
+     - Using a proxy
+     - Reducing number of workers
+     - Increasing timeout
+  
+  2. Filter to only see detected profiles:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --profiles "detected"
+     ```
+  
+  3. Some websites may have changed their structure (updates needed)
+</Accordion>
+
+<Accordion title="Cloudflare or CAPTCHA blocking requests">
+  **Problem:** Error messages like "Attention Required" or "Cloudflare" in results.
+
+  **Solution:**
+  1. This is expected for some websites with anti-bot protection
+  
+  2. The web app interface (not CLI) may handle CAPTCHAs better:
+     ```bash
+     npm start
+     # Open http://localhost:9005/app.html
+     ```
+  
+  3. Use mode options to avoid heavy detection:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --mode "fast"
+     ```
+  
+  4. Consider using proxies for affected sites
+</Accordion>
+
+<Note>
+Some websites actively block automated tools. Social Analyzer includes WAF detection, but may still be blocked by advanced protection systems like Cloudflare.
+</Note>
+
+### Output and Results Issues
+
+<Accordion title="No results returned">
+  **Problem:** Search completes but no profiles detected.
+
+  **Solution:**
+  1. Try with `--filter "all"` to see all results:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --filter "all" --profiles "all"
+     ```
+  
+  2. Check username spelling and format
+  
+  3. Try variations of the username:
+     ```bash
+     python3 -m social-analyzer --username "johndoe,john_doe,john.doe"
+     ```
+  
+  4. Verify internet connectivity
+</Accordion>
+
+<Accordion title="JSON output is malformed">
+  **Problem:** JSON output cannot be parsed.
+
+  **Solution:**
+  1. Ensure silent mode when using JSON:
+     ```python
+     results = SocialAnalyzer.run_as_object(username="johndoe", silent=True)
+     ```
+  
+  2. Use output redirection properly:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --output "json" --silent > results.json
+     ```
+  
+  3. Check for error messages mixed in output
+</Accordion>
+
+## Docker Issues
+
+<Accordion title="Docker container exits immediately">
+  **Problem:** Container starts then stops.
+
+  **Solution:**
+  1. Check container logs:
+     ```bash
+     docker logs <container_id>
+     ```
+  
+  2. Ensure port 9005 is not already in use:
+     ```bash
+     lsof -i :9005
+     ```
+  
+  3. Try a different port:
+     ```bash
+     docker run -p 9006:9005 qeeqbox/social-analyzer
+     ```
+</Accordion>
+
+<Accordion title="Cannot access web interface at localhost:9005">
+  **Problem:** Web interface is not accessible.
+
+  **Solution:**
+  1. Verify container is running:
+     ```bash
+     docker ps
+     ```
+  
+  2. Check correct URL: `http://localhost:9005/app.html`
+  
+  3. Try `http://0.0.0.0:9005/app.html` or `http://127.0.0.1:9005/app.html`
+  
+  4. Check firewall settings
+</Accordion>
+
+<Accordion title="Docker compose grid mode not working">
+  **Problem:** Grid mode fails or doesn't improve performance.
+
+  **Solution:**
+  1. Ensure docker-compose.yml is present:
+     ```bash
+     ls -la docker-compose.yml
+     ```
+  
+  2. Check Docker Compose version:
+     ```bash
+     docker-compose --version
+     ```
+  
+  3. Rebuild containers:
+     ```bash
+     docker-compose down
+     docker-compose up --build
+     ```
+</Accordion>
+
+## Performance Issues
+
+<Accordion title="Search is very slow">
+  **Problem:** Searches take too long to complete.
+
+  **Solution:**
+  1. Use `--top` to search fewer sites:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --top 50
+     ```
+  
+  2. Target specific websites:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --websites "github twitter"
+     ```
+  
+  3. Use fast mode:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --mode "fast"
+     ```
+  
+  4. Increase worker count (requires code modification):
+     ```python
+     SocialAnalyzer.workers = 30
+     ```
+  
+  5. Reduce timeout:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --timeout 5
+     ```
+</Accordion>
+
+<Accordion title="High memory usage">
+  **Problem:** Social Analyzer consumes too much RAM.
+
+  **Solution:**
+  1. Reduce number of workers
+  2. Don't use screenshot feature for many profiles
+  3. Process smaller batches of usernames
+  4. Close other applications
+  5. Search fewer websites at once
+</Accordion>
+
+## Metadata and Extraction Issues
+
+<Accordion title="Metadata extraction returns empty results">
+  **Problem:** `--metadata` flag doesn't extract information.
+
+  **Solution:**
+  1. Ensure profiles are detected first
+  
+  2. Metadata depends on profile structure - not all sites support it
+  
+  3. Use with extract flag:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --metadata --extract
+     ```
+  
+  4. Check if QeeqBox OSINT module is properly installed
+</Accordion>
+
+## Logging and Debugging
+
+<Accordion title="Logs are not being saved">
+  **Problem:** Log files are not created despite using `--logs`.
+
+  **Solution:**
+  1. Check permissions in temp directory
+  
+  2. Specify custom log directory:
+     ```bash
+     python3 -m social-analyzer --username "johndoe" --logs --logs_dir "./my_logs"
+     ```
+  
+  3. Ensure directory exists and is writable
+</Accordion>
+
+### Enable Debug Mode
+
+For detailed troubleshooting information:
+
+```python
+from importlib import import_module
+import logging
+
+# Enable debug logging
+logging.basicConfig(level=logging.DEBUG)
+
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer(silent=False)
+results = SocialAnalyzer.run_as_object(username="johndoe")
+```
+
+## Common Error Messages
+
+| Error Message | Likely Cause | Solution |
+|---------------|--------------|----------|
+| `ModuleNotFoundError` | Missing Python dependencies | Run `pip3 install -r requirements.txt` |
+| `ConnectionError` | Network issues | Check internet connection, increase timeout |
+| `WebDriverException` | Browser driver not found | Install geckodriver or chromedriver |
+| `PermissionError` | Insufficient file permissions | Use `sudo` or change directory permissions |
+| `JSONDecodeError` | Invalid API response | Website structure changed, needs update |
+| `TimeoutError` | Request took too long | Increase `--timeout` value |
+| `TesseractNotFoundError` | OCR not installed | Install tesseract-ocr package |
+
+## Getting Help
+
+If you're still experiencing issues:
+
+1. **Check GitHub Issues:** https://github.com/qeeqbox/social-analyzer/issues
+2. **Search for similar problems** - your issue may already be solved
+3. **Open a new issue** with:
+   - Your operating system
+   - Python/Node.js version
+   - Complete error message
+   - Steps to reproduce
+   - Command you ran
+
+<Warning>
+For issues related to **private modules** or modules ending in `-private`, contact the author directly. Do not open GitHub issues for private module problems.
+</Warning>
+
+## Known Limitations
+
+- Some websites may require manual verification (CAPTCHAs)
+- Anti-bot systems may block automated requests
+- Detection accuracy varies by website structure
+- Screenshots require GUI environment (may fail in headless servers)
+- Rate limiting may occur on some platforms
+- Some countries may block certain social media sites
+
+<Tip>
+Keep Social Analyzer updated to benefit from the latest website detection patterns and bug fixes:
+```bash
+pip3 install --upgrade social-analyzer
+```
+</Tip>

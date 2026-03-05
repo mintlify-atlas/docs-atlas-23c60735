@@ -1,0 +1,331 @@
+---
+title: 'Proxy Settings'
+description: 'Configure proxy servers, user agents, headers, and request timeouts'
+---
+
+## Overview
+
+Social Analyzer supports advanced network configuration including proxy servers, custom HTTP headers, user-agent strings, and request timeouts. These settings are essential for avoiding rate limits, bypassing restrictions, and integrating with existing security infrastructure.
+
+## Proxy Configuration
+
+### Setting Up a Proxy (Node.js)
+
+In Node.js, the proxy is configured in `modules/helper.js`:
+
+```javascript
+// modules/helper.js
+const proxy = 'http://your-proxy-server:8080'
+```
+
+The proxy can also be set dynamically through the web API:
+
+```javascript
+// API endpoint: POST /change_settings
+{
+  "proxy": "http://your-proxy-server:8080",
+  "user_agent": "Custom User Agent String"
+}
+```
+
+### Proxy Support (Python)
+
+Python version uses the `requests` library with session-based connections. To configure a proxy, you'll need to modify the session configuration:
+
+```python
+# Proxy configuration is handled through environment variables
+export HTTP_PROXY="http://your-proxy-server:8080"
+export HTTPS_PROXY="https://your-proxy-server:8080"
+
+python app.py --username "johndoe"
+```
+
+### HTTPS Proxy Agent
+
+The Node.js implementation uses `https-proxy-agent` for secure proxy connections:
+
+```javascript
+import HttpsProxyAgent from 'https-proxy-agent'
+
+if (helper.proxy !== '') {
+  helper.header_options.agent = HttpsProxyAgent(helper.proxy)
+}
+```
+
+## User Agent Configuration
+
+### Default User Agents
+
+**Node.js:**
+```javascript
+const header_options = {
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0'
+  }
+}
+```
+
+**Python:**
+```python
+self.headers = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:86.0) Gecko/20100101 Firefox/86.0"
+}
+```
+
+### Custom User Agent (Python CLI)
+
+<ParamField path="headers" type="dict" default="{}">
+  Custom HTTP headers including User-Agent.
+  
+  ```bash
+  python app.py --username "johndoe" \
+    --headers '{"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}'
+  ```
+</ParamField>
+
+### Custom User Agent (Node.js API)
+
+```bash
+curl -X POST http://localhost:9005/change_settings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+  }'
+```
+
+## Request Timeout Configuration
+
+### Timeout Settings (Python)
+
+<ParamField path="timeout" type="integer" default="0">
+  Delay in seconds between each request to avoid rate limiting.
+  
+  **Default:** `0` (no delay)
+  
+  ```bash
+  # Add 2-second delay between requests
+  python app.py --username "johndoe" --timeout 2
+  ```
+  
+  <Info>
+    Setting a timeout helps avoid rate limits and reduces the chance of being blocked by websites.
+  </Info>
+</ParamField>
+
+The timeout is applied between requests:
+
+```python
+if self.timeout:
+    sleep(self.timeout)
+```
+
+### Connection Timeout (Node.js)
+
+Node.js uses dynamic timeouts based on site configuration:
+
+```javascript
+const timeout = (time !== 0) ? time * 1000 : 5000
+request.setTimeout(timeout, function() {
+  // Handle timeout
+})
+```
+
+**Default timeout:** 5 seconds per request
+
+### Timeout in Slow Mode
+
+For browser-based slow scanning, timeouts are configured per site:
+
+```javascript
+const timeout = (site.timeout !== 0) ? site.timeout * 1000 : 5000
+
+const timeouts = {
+  implicit: timeout,
+  pageLoad: timeout,
+  script: timeout
+}
+```
+
+## Custom Headers
+
+### Python Implementation
+
+<ParamField path="headers" type="dict" default="{}">
+  Custom HTTP headers as a JSON dictionary.
+  
+  ```bash
+  python app.py --username "johndoe" \
+    --headers '{
+      "User-Agent": "Custom Agent",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Referer": "https://google.com"
+    }'
+  ```
+</ParamField>
+
+Headers are applied to all requests:
+
+```python
+session.headers.update(self.headers)
+response = session.get(url, timeout=5, verify=False)
+```
+
+### Node.js Implementation
+
+Headers are configured in `helper.js` and can be modified programmatically:
+
+```javascript
+const header_options = {
+  headers: {
+    'User-Agent': 'Mozilla/5.0 ...',
+    'Accept': 'text/html,application/xhtml+xml',
+    'Accept-Language': 'en-US,en;q=0.9'
+  }
+}
+```
+
+## Logging Configuration
+
+<ParamField path="logs" type="boolean" default="false">
+  Enable detailed logging for debugging and analysis.
+  
+  ```bash
+  python app.py --username "johndoe" --logs
+  ```
+</ParamField>
+
+<ParamField path="logs_dir" type="string" default="">
+  Custom directory for log files.
+  
+  ```bash
+  python app.py --username "johndoe" --logs --logs_dir "/var/log/social-analyzer"
+  ```
+</ParamField>
+
+<ParamField path="silent" type="boolean" default="false">
+  Disable output to screen (useful for automation).
+  
+  ```bash
+  python app.py --username "johndoe" --silent --output json > results.json
+  ```
+</ParamField>
+
+## SSL/TLS Configuration
+
+### Certificate Verification
+
+Python implementation disables SSL verification by default for compatibility:
+
+```python
+response = session.get(url, timeout=5, verify=False)
+```
+
+<Warning>
+  Disabling SSL verification can expose you to security risks. Only use this in controlled environments.
+</Warning>
+
+### Custom Certificate (Node.js)
+
+The Node.js implementation supports custom certificate files:
+
+```javascript
+let tecert_file = '/path/to/cert.pem'
+```
+
+## Complete Examples
+
+### Python with Proxy and Custom Headers
+
+```bash
+# Set proxy via environment
+export HTTPS_PROXY="http://proxy.company.com:8080"
+
+# Run with custom headers and timeout
+python app.py \
+  --username "johndoe" \
+  --headers '{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}' \
+  --timeout 2 \
+  --logs \
+  --output json
+```
+
+### Node.js Web API Configuration
+
+```javascript
+// Start the server
+node app.js
+
+// Configure settings via API
+fetch('http://localhost:9005/change_settings', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    proxy: 'http://proxy.company.com:8080',
+    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+  })
+})
+```
+
+### Avoiding Rate Limits
+
+```bash
+# Use timeout to slow down requests
+python app.py \
+  --username "johndoe" \
+  --websites "instagram twitter facebook" \
+  --timeout 3 \
+  --mode fast
+```
+
+## FAQ
+
+<Accordion title="Why do I need a proxy?">
+  Proxies are useful for:
+  - **Avoiding IP bans**: Distribute requests across multiple IP addresses
+  - **Bypassing geo-restrictions**: Access region-locked websites
+  - **Corporate networks**: Route traffic through required proxy servers
+  - **Privacy**: Hide your real IP address
+</Accordion>
+
+<Accordion title="What timeout value should I use?">
+  Recommended timeout values:
+  - **Fast searches**: 1-2 seconds
+  - **Avoiding rate limits**: 2-3 seconds
+  - **Conservative approach**: 5+ seconds
+  
+  Higher timeouts reduce the risk of being blocked but increase total scan time.
+</Accordion>
+
+<Accordion title="Can I use SOCKS5 proxies?">
+  Node.js implementation supports HTTPS proxies via `https-proxy-agent`. For SOCKS5 support, you may need to use a SOCKS-to-HTTP proxy converter or modify the proxy agent configuration.
+</Accordion>
+
+<Accordion title="How do I rotate user agents?">
+  For user agent rotation, you'll need to:
+  1. Create a script that runs Social Analyzer multiple times
+  2. Change the `--headers` parameter for each run
+  3. Use different user agent strings from a list
+  
+  ```bash
+  # Example rotation script
+  agents=(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/102.0"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64) Chrome/108.0.0.0"
+  )
+  
+  for agent in "${agents[@]}"; do
+    python app.py --username "johndoe" --headers "{\"User-Agent\": \"$agent\"}"
+  done
+  ```
+</Accordion>
+
+<Accordion title="Are requests logged?">
+  When `--logs` is enabled, Social Analyzer creates detailed logs in the logs directory. Use `--silent` to suppress console output while still logging to files.
+</Accordion>
+
+## See Also
+
+- [CLI Options](/configuration/options) - All available command-line options
+- [Website Selection](/configuration/websites-selection) - Filter websites by country, type, or popularity
+- [Integration Guide](/resources/integration) - Integrate Social Analyzer with other tools

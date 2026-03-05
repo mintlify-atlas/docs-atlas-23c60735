@@ -1,0 +1,742 @@
+---
+title: 'Web API Endpoints'
+description: 'Express.js web API reference for Social Analyzer'
+icon: 'globe'
+---
+
+## Overview
+
+Social Analyzer includes an Express.js web server providing REST API endpoints for profile analysis, settings management, and task control.
+
+---
+
+## Starting the Web Server
+
+### Node.js
+
+```bash
+npm start
+# Server runs on http://localhost:9005
+```
+
+### Docker
+
+```bash
+docker run -p 9005:9005 qeeqbox/social-analyzer
+```
+
+---
+
+## Base URL
+
+```
+http://localhost:9005
+```
+
+All endpoints are relative to this base URL.
+
+---
+
+## Endpoints
+
+### POST /analyze_string
+
+Analyze a username across social media platforms.
+
+<ParamField body="string" type="string" required>
+  Username to analyze. Can be a single username or comma-separated list for batch analysis.
+  
+  ```json
+  "johndoe"
+  "johndoe,janedoe,user123"
+  ```
+</ParamField>
+
+<ParamField body="uuid" type="string" required>
+  Unique task identifier (UUID format). Used for logging and task tracking.
+  
+  ```json
+  "550e8400-e29b-41d4-a716-446655440000"
+  ```
+</ParamField>
+
+<ParamField body="option" type="string" required>
+  Comma-separated analysis options. Available options:
+  
+  - `FindUserProfilesFast` - Fast profile detection
+  - `GetUserProfilesFast` - Fast profile retrieval
+  - `FindUserProfilesSlow` - Deep profile detection (not compatible with Fast)
+  - `ShowUserProfilesSlow` - Show advanced profiles without finding
+  - `FindUserProfilesSpecial` - Specialized detection methods
+  - `LookUps` - External search engine lookups
+  - `CustomSearch` - Google custom search integration
+  - `FindOrigins` - Name origin analysis
+  - `SplitWordsByUpperCase` - Split username by uppercase letters
+  - `SplitWordsByAlphabet` - Split username alphabetically
+  - `FindSymbols` - Detect symbols in username
+  - `FindNumbers` - Detect numbers in username
+  - `FindAges` - Guess age from username
+  - `ConvertNumbers` - Convert numbers to words
+  - `WordInfo` - Get word information
+  - `MostCommon` - Find most common words
+  - `ExtractMetadata` - Extract OSINT metadata
+  - `NetworkGraph` - Generate relationship graph (requires ExtractMetadata)
+  - `CategoriesStats` - Generate category statistics
+  - `MetadataStats` - Generate metadata statistics
+  
+  ```json
+  "FindUserProfilesFast,GetUserProfilesFast"
+  "FindUserProfilesSlow,ShowUserProfilesSlow,ExtractMetadata"
+  ```
+</ParamField>
+
+<ParamField body="group" type="boolean">
+  Automatically set to `true` if `string` contains commas (batch mode)
+</ParamField>
+
+#### Response
+
+<ResponseField name="username" type="string">
+  Analyzed username
+</ResponseField>
+
+<ResponseField name="uuid" type="string">
+  Task UUID
+</ResponseField>
+
+<ResponseField name="info" type="object">
+  Analysis metadata
+  
+  <Expandable title="info fields">
+    <ResponseField name="items" type="array">
+      Search engine results
+    </ResponseField>
+    
+    <ResponseField name="original" type="string">
+      Original username
+    </ResponseField>
+    
+    <ResponseField name="corrected" type="string">
+      Corrected/normalized username
+    </ResponseField>
+    
+    <ResponseField name="total" type="number">
+      Total profiles checked
+    </ResponseField>
+    
+    <ResponseField name="checking" type="string">
+      Status message
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="user_info_normal" type="object">
+  Fast scan results
+  
+  <Expandable title="user_info_normal fields">
+    <ResponseField name="data" type="array">
+      Array of detected profiles with link, rate, status, title, etc.
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Scan type ("all")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="user_info_advanced" type="object">
+  Slow/deep scan results (if enabled)
+  
+  <Expandable title="user_info_advanced fields">
+    <ResponseField name="data" type="array">
+      Advanced detection results
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Scan type ("all", "show", or "noshow")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="user_info_special" type="object">
+  Special detection results (if enabled)
+  
+  <Expandable title="user_info_special fields">
+    <ResponseField name="data" type="array">
+      Special detection results
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Scan type ("all")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="ages" type="array">
+  Guessed ages from username (if FindAges enabled)
+</ResponseField>
+
+<ResponseField name="names_origins" type="array">
+  Name origin analysis (if FindOrigins enabled)
+</ResponseField>
+
+<ResponseField name="table" type="object">
+  Parsed username components
+  
+  <Expandable title="table fields">
+    <ResponseField name="prefix" type="array">
+      Detected prefixes
+    </ResponseField>
+    
+    <ResponseField name="name" type="array">
+      Detected names
+    </ResponseField>
+    
+    <ResponseField name="number" type="array">
+      Detected numbers
+    </ResponseField>
+    
+    <ResponseField name="symbol" type="array">
+      Detected symbols
+    </ResponseField>
+    
+    <ResponseField name="unknown" type="array">
+      Unknown components
+    </ResponseField>
+    
+    <ResponseField name="maybe" type="array">
+      Possible word matches
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="common" type="array">
+  Most common words (if MostCommon enabled)
+</ResponseField>
+
+<ResponseField name="words_info" type="array">
+  Word information from dictionary (if WordInfo enabled)
+</ResponseField>
+
+<ResponseField name="custom_search" type="array">
+  Google custom search results (if CustomSearch enabled)
+</ResponseField>
+
+<ResponseField name="graph" type="object">
+  Network relationship graph (if NetworkGraph enabled)
+  
+  <Expandable title="graph structure">
+    <ResponseField name="graph.nodes" type="array">
+      Graph nodes
+    </ResponseField>
+    
+    <ResponseField name="graph.links" type="array">
+      Graph edges/connections
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  Statistics (if CategoriesStats or MetadataStats enabled)
+  
+  <Expandable title="stats fields">
+    <ResponseField name="categories" type="object">
+      Category distribution
+    </ResponseField>
+    
+    <ResponseField name="countries" type="object">
+      Country distribution
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="logs" type="string">
+  Task log contents
+</ResponseField>
+
+#### Example Request
+
+```bash
+curl -X POST http://localhost:9005/analyze_string \
+  -H "Content-Type: application/json" \
+  -d '{
+    "string": "johndoe",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "option": "FindUserProfilesFast,GetUserProfilesFast,ExtractMetadata"
+  }'
+```
+
+#### Example Response
+
+```json
+{
+  "username": "johndoe",
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "info": {
+    "items": [],
+    "original": "johndoe",
+    "corrected": "johndoe",
+    "total": 15,
+    "checking": "Using johndoe with no lookups"
+  },
+  "user_info_normal": {
+    "data": [
+      {
+        "link": "https://www.youtube.com/johndoe",
+        "rate": "100%",
+        "status": "good",
+        "title": "John Doe - YouTube",
+        "language": "English",
+        "type": "Video",
+        "extracted": {
+          "profiles": ["@johndoe"],
+          "urls": ["https://example.com"]
+        }
+      }
+    ],
+    "type": "all"
+  },
+  "user_info_advanced": {
+    "data": [],
+    "type": "all"
+  },
+  "user_info_special": {
+    "data": [],
+    "type": "all"
+  },
+  "ages": [],
+  "names_origins": [],
+  "table": {
+    "name": ["john"],
+    "maybe": ["doe"]
+  },
+  "common": [],
+  "words_info": [],
+  "custom_search": [],
+  "graph": {
+    "graph": {
+      "nodes": [],
+      "links": []
+    }
+  },
+  "stats": {
+    "categories": {},
+    "countries": {}
+  },
+  "logs": "[init] Starting analysis...\n[Done] Analysis complete"
+}
+```
+
+---
+
+### GET /get_settings
+
+Retrieve current server settings and available websites.
+
+#### Response
+
+<ResponseField name="proxy" type="string">
+  Configured proxy URL (empty if none)
+</ResponseField>
+
+<ResponseField name="user_agent" type="string">
+  Current User-Agent header
+</ResponseField>
+
+<ResponseField name="google" type="array">
+  Google API credentials (partially masked)
+  
+  ```json
+  ["AIzaSyBCDE******", "012345678f******"]
+  ```
+</ResponseField>
+
+<ResponseField name="websites" type="array">
+  Available websites with selection status
+  
+  <Expandable title="website object">
+    <ResponseField name="index" type="number">
+      Website index in the list
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      Website domain
+    </ResponseField>
+    
+    <ResponseField name="selected" type="string">
+      Selection status ("true" or "false")
+    </ResponseField>
+    
+    <ResponseField name="global_rank" type="number">
+      Website popularity rank
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example Request
+
+```bash
+curl http://localhost:9005/get_settings
+```
+
+#### Example Response
+
+```json
+{
+  "proxy": "",
+  "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:86.0) Gecko/20100101 Firefox/86.0",
+  "google": [
+    "AIzaSyBCDE******",
+    "012345678f******"
+  ],
+  "websites": [
+    {
+      "index": 0,
+      "url": "youtube.com",
+      "selected": "true",
+      "global_rank": 2
+    },
+    {
+      "index": 1,
+      "url": "twitter.com",
+      "selected": "true",
+      "global_rank": 8
+    }
+  ]
+}
+```
+
+---
+
+### POST /save_settings
+
+Update server settings and website selections.
+
+<ParamField body="websites" type="string">
+  Comma-separated indices of websites to select
+  
+  ```json
+  "0,1,5,10,25"
+  ```
+</ParamField>
+
+<ParamField body="google_key" type="string">
+  Google API key (or masked value to keep current)
+</ParamField>
+
+<ParamField body="google_cv" type="string">
+  Google Custom Search engine ID (or masked value to keep current)
+</ParamField>
+
+<ParamField body="user_agent" type="string">
+  Custom User-Agent header
+</ParamField>
+
+<ParamField body="proxy" type="string">
+  Proxy URL (empty to disable)
+</ParamField>
+
+#### Response
+
+<ResponseField name="response" type="string">
+  Success message
+  
+  ```json
+  "Done"
+  ```
+</ResponseField>
+
+#### Example Request
+
+```bash
+curl -X POST http://localhost:9005/save_settings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "websites": "0,1,2,3,4",
+    "user_agent": "CustomBot/1.0",
+    "proxy": "",
+    "google_key": "AIzaSyBCDE******",
+    "google_cv": "012345678f******"
+  }'
+```
+
+---
+
+### POST /get_logs
+
+Retrieve the last log line for a task.
+
+<ParamField body="uuid" type="string" required>
+  Task UUID
+</ParamField>
+
+#### Response
+
+Returns plain text (not JSON):
+- Last log line if file exists and has content
+- `"nothing_here_error"` if log file doesn't exist
+- `"nothinghere"` if UUID is empty
+
+#### Example Request
+
+```bash
+curl -X POST http://localhost:9005/get_logs \
+  -H "Content-Type: application/json" \
+  -d '{"uuid": "550e8400-e29b-41d4-a716-446655440000"}'
+```
+
+#### Example Response
+
+```
+[Finished] Analyzing: johndoe Task: 550e8400-e29b-41d4-a716-446655440000
+```
+
+---
+
+### GET /generate
+
+Generate username combinations from a list of words.
+
+<ParamField query="option" type="string" required>
+  Must be "Generate"
+</ParamField>
+
+<ParamField query="words" type="array" required>
+  Array of 2-7 words to combine
+</ParamField>
+
+#### Response
+
+<ResponseField name="combinations" type="array">
+  All possible combinations of the input words
+  
+  ```json
+  ["johndoe", "doejohn", "john", "doe"]
+  ```
+</ResponseField>
+
+#### Example Request
+
+```bash
+curl "http://localhost:9005/generate?option=Generate&words[]=john&words[]=doe"
+```
+
+#### Example Response
+
+```json
+{
+  "combinations": [
+    "johndoe",
+    "doejohn",
+    "john",
+    "doe"
+  ]
+}
+```
+
+---
+
+### POST /cancel
+
+Cancel a running analysis task.
+
+<ParamField body="option" type="string" required>
+  Must be "on" to trigger cancellation
+</ParamField>
+
+<ParamField body="uuid" type="string" required>
+  Task UUID to cancel (sanitized, alphanumeric and hyphens only)
+</ParamField>
+
+#### Response
+
+<ResponseField name="response" type="string">
+  Success message
+  
+  ```json
+  "Done"
+  ```
+</ResponseField>
+
+#### Example Request
+
+```bash
+curl -X POST http://localhost:9005/cancel \
+  -H "Content-Type: application/json" \
+  -d '{
+    "option": "on",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000"
+  }'
+```
+
+---
+
+## Special Test Endpoint
+
+The `/analyze_string` endpoint has a special test mode:
+
+```bash
+curl -X POST http://localhost:9005/analyze_string \
+  -H "Content-Type: application/json" \
+  -d '{
+    "string": "test_user_2021_2022_",
+    "uuid": "test",
+    "option": "FindUserProfilesFast"
+  }'
+```
+
+If a file named `test.json` exists in the server directory, it will be returned instead of performing actual analysis.
+
+---
+
+## Error Responses
+
+All endpoints may return:
+
+```json
+"Error"
+```
+
+When:
+- Required parameters are missing
+- Invalid data is provided
+- Internal errors occur
+
+---
+
+## Integration Examples
+
+### JavaScript/Node.js
+
+```javascript
+const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
+
+async function analyzeUsername(username) {
+  try {
+    const response = await axios.post('http://localhost:9005/analyze_string', {
+      string: username,
+      uuid: uuidv4(),
+      option: 'FindUserProfilesFast,GetUserProfilesFast,ExtractMetadata'
+    });
+    
+    console.log(`Found ${response.data.user_info_normal.data.length} profiles`);
+    
+    response.data.user_info_normal.data.forEach(profile => {
+      console.log(`[${profile.rate}] ${profile.link}`);
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+analyzeUsername('johndoe');
+```
+
+### Python
+
+```python
+import requests
+import uuid
+import json
+
+def analyze_username(username):
+    url = 'http://localhost:9005/analyze_string'
+    
+    payload = {
+        'string': username,
+        'uuid': str(uuid.uuid4()),
+        'option': 'FindUserProfilesFast,GetUserProfilesFast,ExtractMetadata'
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        profiles = data.get('user_info_normal', {}).get('data', [])
+        print(f"Found {len(profiles)} profiles\n")
+        
+        for profile in profiles:
+            print(f"[{profile['rate']}] {profile['link']}")
+            if 'title' in profile:
+                print(f"  {profile['title']}")
+            print()
+        
+        return data
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
+
+result = analyze_username('johndoe')
+```
+
+### cURL with Polling
+
+```bash
+#!/bin/bash
+
+USERNAME="johndoe"
+UUID=$(uuidgen)
+
+echo "Starting analysis for $USERNAME..."
+
+# Start analysis
+curl -X POST http://localhost:9005/analyze_string \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"string\": \"$USERNAME\",
+    \"uuid\": \"$UUID\",
+    \"option\": \"FindUserProfilesFast,GetUserProfilesFast\"
+  }" > results.json
+
+echo "Analysis complete. Results saved to results.json"
+
+# Extract detected profiles
+jq '.user_info_normal.data[] | "[\(.rate)] \(.link)"' results.json
+```
+
+---
+
+## Notes
+
+<Note>
+  The web server is single-threaded by default. For production use, consider using a process manager like PM2 or running multiple instances behind a load balancer.
+</Note>
+
+<Warning>
+  UUIDs in `/cancel` and `/get_logs` are sanitized to alphanumeric and hyphens only. Use standard UUID format.
+</Warning>
+
+<Tip>
+  For long-running tasks, poll `/get_logs` periodically to monitor progress:
+  ```bash
+  watch -n 2 'curl -s -X POST http://localhost:9005/get_logs -H "Content-Type: application/json" -d "{\"uuid\": \"$UUID\"}"'
+  ```
+</Tip>
+
+---
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="CLI Reference" icon="terminal" href="/api/cli-reference">
+    Command-line interface documentation
+  </Card>
+  
+  <Card title="Python API" icon="python" href="/api/python-class">
+    Python class and methods reference
+  </Card>
+  
+  <Card title="Output Formats" icon="file-export" href="/api/output-formats">
+    Understanding result structures
+  </Card>
+  
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get started with Social Analyzer
+  </Card>
+</CardGroup>

@@ -1,0 +1,329 @@
+---
+title: 'Node.js CLI'
+description: 'Use Social Analyzer from the command line with Node.js'
+---
+
+The Node.js CLI provides a fast command-line interface for analyzing user profiles across social media platforms. It supports the same detection capabilities as the web interface but is optimized for automation and scripting.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Node.js">
+    Ensure Node.js (version >13) is installed on your system.
+  </Step>
+  
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/qeeqbox/social-analyzer.git
+    cd social-analyzer
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+</Steps>
+
+## Basic Usage
+
+### Simple Username Search
+
+Search for a single username across all supported websites:
+
+```bash
+node app.js --username "johndoe"
+```
+
+### Multiple Usernames
+
+Search for multiple usernames simultaneously (separated by commas):
+
+```bash
+node app.js --username "johndoe,janedoe"
+```
+
+## CLI Arguments
+
+### Required Arguments
+
+| Argument | Description | Example |
+|----------|-------------|----------|
+| `--username` | Username(s) to search for | `"johndoe"` or `"johndoe,janedoe"` |
+
+### Website Selection
+
+<Tabs>
+  <Tab title="All Websites">
+    ```bash
+    node app.js --username "johndoe" --websites "all"
+    ```
+    Searches across all available platforms (default behavior).
+  </Tab>
+  
+  <Tab title="Specific Websites">
+    ```bash
+    node app.js --username "johndoe" --websites "youtube tiktok tumblr"
+    ```
+    Searches only on specified platforms (space-separated).
+  </Tab>
+  
+  <Tab title="Top Ranked">
+    ```bash
+    node app.js --username "johndoe" --top 50
+    ```
+    Searches only the top N websites by Alexa ranking.
+  </Tab>
+</Tabs>
+
+### Analysis Mode
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| **Fast** (default) | `--mode fast` | Uses `FindUserProfilesFast` - quick analysis |
+| **Slow** | `--mode slow` | Uses `FindUserProfilesSlow` - deep analysis |
+| **Special** | `--mode special` | Uses `FindUserProfilesSpecial` - special detections |
+
+```bash
+node app.js --username "johndoe" --mode fast
+```
+
+### Detection Method
+
+<CodeGroup>
+```bash All (default)
+node app.js --username "johndoe" --method all
+```
+
+```bash Find Only
+node app.js --username "johndoe" --method find
+```
+
+```bash Get All
+node app.js --username "johndoe" --method get
+```
+</CodeGroup>
+
+- `all` - Combines find and get methods
+- `find` - Shows only detected profiles
+- `get` - Shows all profiles regardless of detection
+
+### Output Format
+
+<Tabs>
+  <Tab title="Pretty (default)">
+    ```bash
+    node app.js --username "johndoe" --output pretty
+    ```
+    Human-readable colored output in the terminal.
+  </Tab>
+  
+  <Tab title="JSON">
+    ```bash
+    node app.js --username "johndoe" --output json
+    ```
+    Machine-readable JSON output for integration with other tools.
+  </Tab>
+</Tabs>
+
+### Filtering Results
+
+#### Filter by Profile Quality
+
+```bash
+# Show only good matches
+node app.js --username "johndoe" --filter "good"
+
+# Show good and maybe matches
+node app.js --username "johndoe" --filter "good,maybe"
+
+# Show all results
+node app.js --username "johndoe" --filter "all"
+```
+
+Available filters:
+- `good` - High confidence matches (default)
+- `maybe` - Moderate confidence matches
+- `bad` - Low confidence matches
+- `all` - All matches
+
+#### Filter by Profile Status
+
+```bash
+# Show only detected profiles
+node app.js --username "johndoe" --profiles "detected"
+
+# Show detected and failed profiles
+node app.js --username "johndoe" --profiles "detected,failed"
+
+# Show all profile statuses
+node app.js --username "johndoe" --profiles "all"
+```
+
+Available profile types:
+- `detected` - Successfully detected profiles (default)
+- `unknown` - Profiles with uncertain status
+- `failed` - Failed checks
+
+### Advanced Features
+
+#### Extract Additional Data
+
+```bash
+# Extract patterns (URLs, emails, etc.)
+node app.js --username "johndoe" --extract
+
+# Extract metadata from profile pages
+node app.js --username "johndoe" --metadata
+
+# Combine both
+node app.js --username "johndoe" --extract --metadata
+```
+
+#### Geographic Filtering
+
+```bash
+# Filter by country codes (space-separated)
+node app.js --username "johndoe" --countries "us br ru"
+```
+
+#### Category Filtering
+
+```bash
+# Filter by website type
+node app.js --username "johndoe" --type "Music"
+node app.js --username "johndoe" --type "Adult"
+```
+
+#### Customize Output Fields
+
+```bash
+# Show specific fields only
+node app.js --username "johndoe" --options "link,rate,title"
+```
+
+Available options:
+- `link` - Profile URL
+- `rate` - Detection confidence percentage
+- `title` - Page title
+- `text` - Extracted text content
+
+#### Trim Long Strings
+
+```bash
+node app.js --username "johndoe" --trim
+```
+
+Truncates long text fields to 50 characters for cleaner output.
+
+## Complete Examples
+
+<CodeGroup>
+```bash Basic Search
+node app.js --username "johndoe"
+```
+
+```bash Targeted Search
+node app.js --username "johndoe" --websites "youtube tiktok instagram"
+```
+
+```bash Top Sites with Metadata
+node app.js --username "johndoe" --top 100 --metadata
+```
+
+```bash Multi-User with Filters
+node app.js --username "johndoe,janedoe" --filter "good,maybe" --profiles "detected"
+```
+
+```bash JSON Output for Automation
+node app.js --username "johndoe" --output json --method find --filter "good"
+```
+
+```bash Full Analysis
+node app.js --username "johndoe" --extract --metadata --trim --output pretty
+```
+</CodeGroup>
+
+## Listing Available Websites
+
+To see all supported websites:
+
+```bash
+node app.js --list
+```
+
+This displays a list of all 900+ supported social media platforms.
+
+## Output Examples
+
+### Pretty Output
+
+```bash
+node app.js --username "johndoe" --output pretty
+```
+
+```
+[init] Detections are updated very often, make sure to get the most up-to-date ones
+[init] NodeJS Version Check
+-----------------------
+link         : https://twitter.com/johndoe
+rate         : %100.00
+status       : good
+title        : John Doe (@johndoe) / Twitter
+language     : English
+-----------------------
+```
+
+### JSON Output
+
+```bash
+node app.js --username "johndoe" --output json
+```
+
+```json
+{
+  "detected": [
+    {
+      "link": "https://twitter.com/johndoe",
+      "rate": "%100.00",
+      "status": "good",
+      "title": "John Doe (@johndoe) / Twitter",
+      "language": "English",
+      "type": "Social Network",
+      "country": "us",
+      "rank": "5"
+    }
+  ]
+}
+```
+
+<Note>
+  The Node.js CLI is limited to `FindUserProfilesFast` mode. For advanced detection modes (`slow` and `special`), use the Python CLI or web interface.
+</Note>
+
+## Performance Tips
+
+- Use `--top` to limit searches to top-ranked websites for faster results
+- Use `--websites` to search only specific platforms when you know where to look
+- Use `--filter "good"` to reduce false positives
+- Use `--output json` for easier parsing in scripts
+- The tool checks websites with randomized delays (1-99ms) to avoid rate limiting
+
+## Troubleshooting
+
+**Node.js version error**
+
+Ensure you're running Node.js version 13 or higher:
+
+```bash
+node --version
+```
+
+**No results found**
+
+Try different variations of the username or use the web interface for more advanced detection options.
+
+**Rate limiting**
+
+If you encounter rate limiting, reduce the number of websites checked or use `--top` with a lower number.
